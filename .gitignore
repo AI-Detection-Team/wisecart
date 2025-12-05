@@ -1,0 +1,59 @@
+# ========================
+# GENEL SİSTEM DOSYALARI
+# ========================
+.DS_Store
+Thumbs.db
+*.log
+
+# ========================
+# PYTHON (AI & Veri Kazıma - Pınar)
+# ========================
+# Sanal Ortamlar (Burası Çok Önemli - venv klasörünü yüklememeli)
+venv/
+env/
+ENV/
+.venv/
+
+# Python Derleme Dosyaları (Gereksiz yer kaplar)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter Notebook (Eğer kullanılırsa)
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Gizli Anahtarlar ve Ayarlar
+.env
+.env.local
+
+# Büyük Veri Setleri (Opsiyonel - Eğer veri çok büyükse açılabilir)
+# *.csv
+# *.xlsx
+
+# ========================
+# .NET CORE / C# (Web & Backend - Fatma & Yağmur)
+# ========================
+# Derleme Çıktıları (Bu klasörler her bilgisayarda yeniden oluşur)
+bin/
+obj/
+Debug/
+Release/
+
+# Visual Studio / VS Code Ayarları
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Web Özel Dosyaları
+wwwroot/lib/  # Eğer kütüphaneler otomatik iniyorsa
+appsettings.Development.json  # Yerel ayarlar (Şifreler vs. olabilir)
+
+# ========================
+# IDE & EDİTÖR
+# ========================
+.idea/
+*.swp
