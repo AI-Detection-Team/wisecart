@@ -7,37 +7,40 @@ import pandas as pd
 import time
 import random
 
-# --- AYARLAR (BÜYÜK VERİ AVI) ---
-# N11 Kategori Linkleri
+# --- AYARLAR (MEGA VERİ AVI - HEDEF 10.000) ---
 CATEGORIES = {
     "Laptop": "https://www.n11.com/bilgisayar/dizustu-bilgisayar",
+    "Masaustu": "https://www.n11.com/bilgisayar/masaustu-bilgisayar",
     "Telefon": "https://www.n11.com/telefon-ve-aksesuarlari/cep-telefonu",
     "Tablet": "https://www.n11.com/bilgisayar/tablet",
     "Televizyon": "https://www.n11.com/elektronik/televizyon-ve-ses-sistemleri/televizyon",
-    "AkilliSaat": "https://www.n11.com/telefon-ve-aksesuarlari/akilli-saat-ve-bileklik"
+    "AkilliSaat": "https://www.n11.com/telefon-ve-aksesuarlari/akilli-saat-ve-bileklik",
+    "Monitor": "https://www.n11.com/bilgisayar/cevre-birimleri/monitor-ve-ekran",
+    "Kulaklik": "https://www.n11.com/arama?q=kulakl%C4%B1k",
+    "OyunKonsolu": "https://www.n11.com/video-oyun-konsol/oyun-konsollari",
+    "Yazici": "https://www.n11.com/bilgisayar/yazici-ve-sarf-malzemeleri/yazici"
 }
 
-# Sayfa Sayısı: Her kategoriden 25 sayfa x ~24 ürün = ~3000 Veri
-MAX_PAGES_PER_CAT = 35
-DELAY = 2 # Sayfalar arası bekleme süresi
+# Hedef: 10 Kategori x 50 Sayfa = 500 Sayfa Tarama
+MAX_PAGES_PER_CAT = 50 
+DELAY = 1.5 # Hızlandırdık
 
 def setup_driver():
     chrome_options = Options()
-    # Bot olduğumuzu gizleyen ayarlar (Anti-Bot Detection)
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
     chrome_options.add_argument("--start-maximized")
-    # chrome_options.add_argument("--headless") # Hızlandırmak isterseniz bu satırı açın (Tarayıcı gizlenir)
+    # chrome_options.add_argument("--headless") 
     
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
 
-def scrape_n11_final():
+def scrape_n11_mega():
     driver = setup_driver()
     all_products = []
     
-    print(f"🚀 BÜYÜK VERİ AVI BAŞLIYOR... (Hedef: 5 Kategori x {MAX_PAGES_PER_CAT} Sayfa)")
+    print(f"🚀 MEGA VERİ AVI BAŞLIYOR... (Hedef: 10.000+ Ürün)")
 
     for cat_name, cat_url in CATEGORIES.items():
         print(f"\n📂 KATEGORİ: {cat_name} taranıyor...")
@@ -46,42 +49,38 @@ def scrape_n11_final():
             current_url = f"{cat_url}?pg={page}"
             try:
                 driver.get(current_url)
-                
-                # Sayfanın altına in ki resimler/fiyatlar yüklensin (Lazy Load)
                 driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
                 time.sleep(DELAY + random.random()) 
                 
-                # Ürün Kartlarını Bul
                 cards = driver.find_elements(By.CSS_SELECTOR, "li.column")
+                
+                # Eğer sayfada ürün yoksa (kategori bitmişse) sonraki kategoriye geç
+                if len(cards) == 0:
+                    print(f"   ⚠️ Sayfa {page} boş, bu kategori bitti.")
+                    break
+
                 print(f"   ├── Sayfa {page}: {len(cards)} ürün bulundu.")
 
                 for card in cards:
                     try:
-                        # 1. Ürün Adı
                         title = card.find_element(By.CLASS_NAME, "productName").text
                         
-                        # 2. Fiyat (İndirimli olanı al)
                         try:
                             price_element = card.find_element(By.CSS_SELECTOR, ".newPrice ins")
                             price = price_element.text.strip()
                         except:
                             price = "0"
 
-                        # 3. Link
-                        try:
-                            link = card.find_element(By.TAG_NAME, "a").get_attribute("href")
+                        try: link = card.find_element(By.TAG_NAME, "a").get_attribute("href")
                         except: link = ""
                         
-                        # 4. Marka (İsmin ilk kelimesi genelde markadır)
                         brand = title.split(" ")[0]
                         
-                        # 5. Yorum Sayısı (ratingText)
                         try:
                             rating_text = card.find_element(By.CLASS_NAME, "ratingText").text
                             rating_count = rating_text.replace("(", "").replace(")", "")
                         except: rating_count = "0"
 
-                        # Fiyatı olmayanları alma
                         if price != "0":
                             all_products.append({
                                 "Kategori": cat_name,
@@ -92,48 +91,34 @@ def scrape_n11_final():
                                 "Link": link
                             })
                     except:
-                        continue # Hatalı kartı atla
+                        continue
             except Exception as e:
-                print(f"⚠️ Sayfa Hatası (Sayfa {page}): {e}")
+                print(f"⚠️ Hata: {e}")
                 continue
 
     driver.quit()
     return all_products
 
 if __name__ == "__main__":
-    # 1. Verileri Çek
-    data = scrape_n11_final()
+    data = scrape_n11_mega()
     
     if len(data) > 0:
         df = pd.DataFrame(data)
         
-        print("\n🧹 VERİ TEMİZLİĞİ YAPILIYOR...")
-        
-        # --- 1. TEMİZLİK: KOPYA ÜRÜNLERİ SİL ---
-        initial_count = len(df)
-        # 'Link' sütunu aynı olanları siler, ilkini tutar
+        # Kopyaları Sil
         df.drop_duplicates(subset=['Link'], keep='first', inplace=True)
-        final_count = len(df)
-        print(f"   -> {initial_count - final_count} adet tekrar eden (reklam/kopya) ürün silindi.")
         
-        # --- 2. TEMİZLİK: FİYAT FORMATI ---
+        # Fiyat Temizliği
         try:
-            # "25.499,00 TL" -> 25499.00 (Float'a çevrilebilir format)
-            df['Fiyat'] = df['Fiyat'].str.replace(" TL", "").str.replace("TL", "").str.strip()
-            df['Fiyat'] = df['Fiyat'].str.replace(".", "") # Binlik ayracını sil
-            df['Fiyat'] = df['Fiyat'].str.replace(",", ".") # Kuruş ayracını nokta yap
-        except: 
-            pass
-
-        # Dosyayı Kaydet
-        df.to_csv("tum_urunler.csv", index=False)
-        try: df.to_excel("tum_urunler.xlsx", index=False)
+            df['Fiyat'] = df['Fiyat'].str.replace(" TL", "").str.replace("TL", "")
+            df['Fiyat'] = df['Fiyat'].str.replace(".", "").str.replace(",", ".")
         except: pass
+
+        df.to_csv("tum_urunler_mega.csv", index=False)
         
         print("\n" + "="*50)
-        print(f"✅ GÖREV TAMAMLANDI! Toplam {len(df)} EŞSİZ ve TEMİZ ürün kaydedildi.")
+        print(f"✅ MEGA GÖREV TAMAMLANDI! Toplam {len(df)} EŞSİZ ürün.")
         print("="*50)
-        print("Kategori Dağılımı:")
         print(df.groupby("Kategori").count()) 
     else:
-        print("❌ Hiç veri çekilemedi. İnternet bağlantınızı kontrol edin.")
+        print("❌ Hiç veri çekilemedi.")
