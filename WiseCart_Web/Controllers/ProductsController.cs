@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using WiseCart_Web.Models; // Kendi proje adınla aynı olmalı
+using WiseCart_Web.Models;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,19 +15,22 @@ namespace WiseCart_Web.Controllers
             _context = context;
         }
 
-        // GET: Products
+        // 1. Ürünleri Listeleme Sayfası
         public async Task<IActionResult> Index()
         {
-            // Veritabanından ilk 50 ürünü çek (Sayfa çok şişmesin diye)
+            // Veritabanından ilk 100 ürünü çekelim (Sayfa kasmasın diye limit koyduk)
+            // İsterseniz .Take(100) kısmını kaldırıp hepsini çekebilirsiniz.
             var products = await _context.Products
-                                         .Include(p => p.Category) // Kategorisini de getir
-                                         .Include(p => p.Brand)    // Markasını da getir
-                                         .Take(50)
-                                         .ToListAsync();
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .OrderByDescending(p => p.Id) // En son eklenenler başta
+                .Take(100) 
+                .ToListAsync();
+
             return View(products);
         }
 
-        // GET: Products/Details/5
+        // 2. Ürün Detay Sayfası
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();

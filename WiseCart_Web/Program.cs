@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using WiseCart_Web.Models; // Kendi proje isminle aynı olmalı
 
@@ -10,7 +11,13 @@ builder.Services.AddDbContext<WiseCartDbContext>(options =>
 
 // MVC Servislerini Ekle
 builder.Services.AddControllersWithViews();
-
+// Authentication Servisini Ekle
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+    });
 var app = builder.Build();
 
 // Hata Ayıklama (Development) Modu
@@ -24,7 +31,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
+app.UseAuthentication();
 app.UseAuthorization();
 
 // Varsayılan Rota (Ana Sayfa)
