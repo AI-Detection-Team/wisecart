@@ -20,3 +20,46 @@ html {
 body {
   margin-bottom: 60px;
 }
+/* --- ANA SAYFA ÖZEL TASARIMLARI --- */
+
+/* Kartların yukarı kalkma efekti */
+.hover-up { 
+    transition: all 0.3s ease; 
+}
+.hover-up:hover { 
+    transform: translateY(-10px); 
+    box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important; 
+}
+
+/* Buton büyüme efekti */
+.hover-scale { 
+    transition: transform 0.2s; 
+}
+.hover-scale:hover { 
+    transform: scale(1.05); 
+}
+
+/* PNG Resim Süzülme Animasyonu */
+.floating-img {
+    animation: float 6s ease-in-out infinite;
+}
+
+/* Burada artık tek @ işareti kullanıyoruz çünkü burası saf CSS dosyası */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+    100% { transform: translateY(0px); }
+}
+
+/* Arka plan parıltısı */
+.glow-effect {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+    border-radius: 50%;
+    z-index: -1;
+}

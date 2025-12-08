@@ -1,8 +1,57 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Ana Sayfa";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container-fluid bg-primary text-white py-5 mb-5 position-relative overflow-hidden" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-6 z-index-1">
+                <h1 class="display-4 fw-bold mb-3">Akıllı Alışverişin <br>Yapay Zeka Hali.</h1>
+                <p class="lead mb-4 text-light opacity-75">WiseCart, binlerce ürünü analiz eder ve size en doğru fiyatı söyler. Kazıklanmaya son verin!</p>
+                <div class="d-flex gap-3">
+                    <a asp-controller="Products" asp-action="Index" class="btn btn-light btn-lg rounded-pill px-4 fw-bold text-primary shadow-sm hover-scale">
+                        <i class="fa-solid fa-magnifying-glass"></i> Ürünleri Keşfet
+                    </a>
+                    
+                    @if (!User.Identity.IsAuthenticated) {
+                        <a asp-controller="Account" asp-action="Register" class="btn btn-outline-light btn-lg rounded-pill px-4 hover-scale">
+                            Ücretsiz Kayıt Ol
+                        </a>
+                    }
+                </div>
+            </div>
+            
+            <div class="col-lg-6 text-center d-none d-lg-block position-relative">
+                <div class="glow-effect"></div>
+                
+                <img src="@Url.Content("~/images/homee.png")" alt="WiseCart AI" class="img-fluid floating-img" style="max-height: 450px; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row text-center g-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4 hover-up">
+                <div class="text-primary mb-3"><i class="fa-solid fa-brain fa-3x"></i></div>
+                <h3 class="h5 fw-bold">Yapay Zeka Analizi</h3>
+                <p class="text-muted">Python tabanlı ML modellerimiz, ürünün özelliklerine göre "Adil Fiyatı" hesaplar.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4 hover-up">
+                <div class="text-success mb-3"><i class="fa-solid fa-chart-line fa-3x"></i></div>
+                <h3 class="h5 fw-bold">Fiyat Takibi</h3>
+                <p class="text-muted">N11 ve Hepsiburada verileriyle piyasanın nabzını tutun.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm p-4 hover-up">
+                <div class="text-warning mb-3"><i class="fa-solid fa-star fa-3x"></i></div>
+                <h3 class="h5 fw-bold">Akıllı Öneriler</h3>
+                <p class="text-muted">Size en uygun ürünleri bulmak için binlerce veriyi tarıyoruz.</p>
+            </div>
+        </div>
+    </div>
 </div>
