@@ -61,8 +61,7 @@
         btn.disabled = true;
 
         try {
-            // Basit bir POST isteği (Pınar'ın API'sine)
-            // Not: Pınar'ın API'si 5000 portunda çalışmalı!
+            // Basit bir POST isteği 
             const response = await fetch("http://localhost:5000/predict", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

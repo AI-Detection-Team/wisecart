@@ -6,7 +6,7 @@ Thumbs.db
 *.log
 
 # ========================
-# PYTHON (AI & Veri Kazıma - Pınar)
+# PYTHON (AI & Veri Kazıma)
 # ========================
 # Sanal Ortamlar (Burası Çok Önemli - venv klasörünü yüklememeli)
 venv/
@@ -32,7 +32,7 @@ __pycache__/
 # *.xlsx
 
 # ========================
-# .NET CORE / C# (Web & Backend - Fatma & Yağmur)
+# .NET CORE / C# (Web & Backend )
 # ========================
 # Derleme Çıktıları (Bu klasörler her bilgisayarda yeniden oluşur)
 bin/
