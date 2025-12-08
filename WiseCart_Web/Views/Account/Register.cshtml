@@ -1,0 +1,48 @@
+@model WiseCart_Web.Models.ViewModels.RegisterModel
+
+<div class="container mt-5" style="max-width: 450px;">
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <h2 class="text-center mb-4 text-primary">Kayıt Ol</h2>
+            
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert" style="display:none;"></div>
+
+            <form asp-action="Register" method="post">
+                <div class="mb-3">
+                    <label class="form-label">Kullanıcı Adı</label>
+                    <input asp-for="Username" class="form-control" placeholder="Örn: kullanici123" />
+                    <span asp-validation-for="Username" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">E-Posta</label>
+                    <input asp-for="Email" class="form-control" type="email" placeholder="mail@ornek.com" />
+                    <span asp-validation-for="Email" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Şifre</label>
+                    <input asp-for="Password" type="password" class="form-control" />
+                    <span asp-validation-for="Password" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Şifre Tekrar</label>
+                    <input asp-for="ConfirmPassword" type="password" class="form-control" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="btn btn-success w-100 py-2">Kayıt Ol</button>
+            </form>
+            
+            <hr class="my-4">
+            <p class="text-center">
+                Zaten hesabın var mı? <a asp-action="Login" class="text-decoration-none">Giriş Yap</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,45 +1,58 @@
 @model WiseCart_Web.Models.Product
 
 @{
-    ViewData["Title"] = "Ürün Detayı - " + Model.Name;
+    ViewData["Title"] = "Detay - " + Model.Name;
 }
 
 <div class="container mt-5">
-    <div class="card shadow-lg border-0">
+    <div class="card shadow-lg border-0 overflow-hidden">
         <div class="row g-0">
-            <div class="col-md-5 bg-light d-flex align-items-center justify-content-center p-3">
-                <img src="@(string.IsNullOrEmpty(Model.ImageUrl) ? "https://via.placeholder.com/500x500?text=Urun+Resmi" : Model.ImageUrl)" 
-                     class="img-fluid rounded" alt="@Model.Name" style="max-height: 400px;">
+            <div class="col-md-5 bg-light d-flex align-items-center justify-content-center p-5">
+                <img src="https://via.placeholder.com/500x500?text=@(Model.Category?.Name)" 
+                     class="img-fluid rounded" alt="@Model.Name">
             </div>
             
             <div class="col-md-7">
                 <div class="card-body p-5">
-                    <h2 class="card-title fw-bold text-dark">@Model.Name</h2>
-                    <hr>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a asp-action="Index">Ürünler</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">@Model.Brand?.Name</li>
+                        </ol>
+                    </nav>
+
+                    <h2 class="fw-bold mb-3">@Model.Name</h2>
                     
-                    <div class="mb-4">
-                        <span class="badge bg-primary fs-6">@Model.Category?.Name</span>
-                        <span class="badge bg-secondary fs-6">@Model.Brand?.Name</span>
-                        <span class="badge bg-warning text-dark fs-6">⭐ @Model.ReviewCount Yorum</span>
+                    <div class="d-flex gap-2 mb-4">
+                        <span class="badge bg-primary px-3 py-2">@Model.Category?.Name</span>
+                        <span class="badge bg-dark px-3 py-2">Model: @Model.Model</span>
+                        <span class="badge bg-warning text-dark px-3 py-2">⭐ @Model.ReviewCount Yorum</span>
                     </div>
 
-                    <h1 class="display-5 text-success fw-bold mb-4">
-                        @Model.CurrentPrice?.ToString("N0") TL
+                    <h1 class="display-4 text-success fw-bold mb-4">
+                        @Model.CurrentPrice?.ToString("N0") <small class="fs-4 text-muted">TL</small>
                     </h1>
 
-                    <div class="d-grid gap-2">
+                    <div class="d-grid gap-3">
                         <a href="@Model.Url" target="_blank" class="btn btn-outline-dark btn-lg">
-                            🌐 Satıcıya Git (N11)
+                            🌐 Satıcıya Git (N11/HB)
                         </a>
                         
-                        <button id="btnAnaliz" class="btn btn-primary btn-lg text-white" onclick="analyzePrice()">
+                        <button id="btnAnaliz" onclick="analyzePrice()" class="btn btn-primary btn-lg text-white shadow-sm">
                             🤖 Yapay Zeka ile Fiyat Analizi Yap
                         </button>
                     </div>
 
-                    <div id="aiResult" class="alert alert-info mt-4 d-none">
-                        <h4 class="alert-heading">🔍 AI Tahmini Hazırlanıyor...</h4>
-                        <p id="aiMessage">Lütfen bekleyin, Python servisine bağlanılıyor...</p>
+                    <div id="aiResultArea" class="mt-4" style="display:none;">
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <h5 class="card-title" id="aiTitle">🔄 Analiz Ediliyor...</h5>
+                                <p class="card-text" id="aiMessage">Veriler Python Yapay Zeka motoruna gönderiliyor, lütfen bekleyin.</p>
+                                <div class="progress mt-2" id="aiLoading">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -50,38 +63,59 @@
 
 <script>
     async function analyzePrice() {
-        const resultDiv = document.getElementById("aiResult");
-        const msg = document.getElementById("aiMessage");
         const btn = document.getElementById("btnAnaliz");
+        const area = document.getElementById("aiResultArea");
+        const title = document.getElementById("aiTitle");
+        const msg = document.getElementById("aiMessage");
+        const loading = document.getElementById("aiLoading");
 
-        // Yükleniyor modu
-        resultDiv.classList.remove("d-none");
-        resultDiv.className = "alert alert-warning mt-4";
-        msg.innerText = "⏳ Veriler Python Yapay Zeka Servisine gönderiliyor...";
+        // UI Güncelle
         btn.disabled = true;
+        area.style.display = "block";
+        title.innerText = "🔄 Analiz Ediliyor...";
+        title.className = "card-title text-primary";
+        
+        // Ürün Verisi
+        const productData = {
+            Marka: "@Model.Brand?.Name",
+            Kategori: "@Model.Category?.Name",
+            Fiyat: @Model.CurrentPrice
+        };
 
         try {
-            // Basit bir POST isteği 
+            // Python API'ye İstek At (Localhost:5000)
             const response = await fetch("http://localhost:5000/predict", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    Marka: "@Model.Brand?.Name",
-                    Kategori: "@Model.Category?.Name",
-                    Fiyat: @Model.CurrentPrice
-                })
+                body: JSON.stringify(productData)
             });
 
-            const data = await response.json();
+            if (!response.ok) throw new Error("API Hatası");
+
+            const result = await response.json();
 
             // Sonucu Göster
-            resultDiv.className = "alert alert-success mt-4";
-            msg.innerHTML = `<strong>✅ AI Tahmini Geldi:</strong><br>
-                             Bu ürünün adil piyasa değeri: <strong>${data.tahmin} TL</strong><br>
-                             Durum: <strong>${data.durum || "Analiz Tamamlandı"}</strong>`;
+            loading.style.display = "none";
+            
+            if (result.durum.includes("Ucuz")) {
+                title.innerText = "✅ " + result.durum;
+                title.className = "card-title text-success fw-bold";
+                msg.innerHTML = `<strong>Harika Fırsat!</strong><br>AI Tahmini: <strong>${result.tahmin} TL</strong><br>${result.mesaj}`;
+            } else if (result.durum.includes("Pahalı")) {
+                title.innerText = "🔴 " + result.durum;
+                title.className = "card-title text-danger fw-bold";
+                msg.innerHTML = `<strong>Dikkat!</strong><br>AI Tahmini: <strong>${result.tahmin} TL</strong><br>Bu ürün piyasa değerinin üzerinde görünüyor.`;
+            } else {
+                title.innerText = "🟡 " + result.durum;
+                title.className = "card-title text-warning fw-bold";
+                msg.innerHTML = `<strong>Normal Fiyat.</strong><br>AI Tahmini: <strong>${result.tahmin} TL</strong><br>Fiyat piyasa ortalamasında.`;
+            }
+
         } catch (error) {
-            resultDiv.className = "alert alert-danger mt-4";
-            msg.innerText = "❌ Hata: Python API'sine ulaşılamadı.";
+            loading.style.display = "none";
+            title.innerText = "❌ Bağlantı Hatası";
+            title.className = "card-title text-danger";
+            msg.innerText = "Python Yapay Zeka servisine ulaşılamadı. Pınar'ın servisi (api_server.py) açık mı?";
         } finally {
             btn.disabled = false;
         }
