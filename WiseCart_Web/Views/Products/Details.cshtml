@@ -1,0 +1,90 @@
+@model WiseCart_Web.Models.Product
+
+@{
+    ViewData["Title"] = "Ürün Detayı - " + Model.Name;
+}
+
+<div class="container mt-5">
+    <div class="card shadow-lg border-0">
+        <div class="row g-0">
+            <div class="col-md-5 bg-light d-flex align-items-center justify-content-center p-3">
+                <img src="@(string.IsNullOrEmpty(Model.ImageUrl) ? "https://via.placeholder.com/500x500?text=Urun+Resmi" : Model.ImageUrl)" 
+                     class="img-fluid rounded" alt="@Model.Name" style="max-height: 400px;">
+            </div>
+            
+            <div class="col-md-7">
+                <div class="card-body p-5">
+                    <h2 class="card-title fw-bold text-dark">@Model.Name</h2>
+                    <hr>
+                    
+                    <div class="mb-4">
+                        <span class="badge bg-primary fs-6">@Model.Category?.Name</span>
+                        <span class="badge bg-secondary fs-6">@Model.Brand?.Name</span>
+                        <span class="badge bg-warning text-dark fs-6">⭐ @Model.ReviewCount Yorum</span>
+                    </div>
+
+                    <h1 class="display-5 text-success fw-bold mb-4">
+                        @Model.CurrentPrice?.ToString("N0") TL
+                    </h1>
+
+                    <div class="d-grid gap-2">
+                        <a href="@Model.Url" target="_blank" class="btn btn-outline-dark btn-lg">
+                            🌐 Satıcıya Git (N11)
+                        </a>
+                        
+                        <button id="btnAnaliz" class="btn btn-primary btn-lg text-white" onclick="analyzePrice()">
+                            🤖 Yapay Zeka ile Fiyat Analizi Yap
+                        </button>
+                    </div>
+
+                    <div id="aiResult" class="alert alert-info mt-4 d-none">
+                        <h4 class="alert-heading">🔍 AI Tahmini Hazırlanıyor...</h4>
+                        <p id="aiMessage">Lütfen bekleyin, Python servisine bağlanılıyor...</p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function analyzePrice() {
+        const resultDiv = document.getElementById("aiResult");
+        const msg = document.getElementById("aiMessage");
+        const btn = document.getElementById("btnAnaliz");
+
+        // Yükleniyor modu
+        resultDiv.classList.remove("d-none");
+        resultDiv.className = "alert alert-warning mt-4";
+        msg.innerText = "⏳ Veriler Python Yapay Zeka Servisine gönderiliyor...";
+        btn.disabled = true;
+
+        try {
+            // Basit bir POST isteği (Pınar'ın API'sine)
+            // Not: Pınar'ın API'si 5000 portunda çalışmalı!
+            const response = await fetch("http://localhost:5000/predict", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    Marka: "@Model.Brand?.Name",
+                    Kategori: "@Model.Category?.Name",
+                    Fiyat: @Model.CurrentPrice
+                })
+            });
+
+            const data = await response.json();
+
+            // Sonucu Göster
+            resultDiv.className = "alert alert-success mt-4";
+            msg.innerHTML = `<strong>✅ AI Tahmini Geldi:</strong><br>
+                             Bu ürünün adil piyasa değeri: <strong>${data.tahmin} TL</strong><br>
+                             Durum: <strong>${data.durum || "Analiz Tamamlandı"}</strong>`;
+        } catch (error) {
+            resultDiv.className = "alert alert-danger mt-4";
+            msg.innerText = "❌ Hata: Python API'sine ulaşılamadı.";
+        } finally {
+            btn.disabled = false;
+        }
+    }
+</script>

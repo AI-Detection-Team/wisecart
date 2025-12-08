@@ -1,15 +1,22 @@
+using Microsoft.EntityFrameworkCore;
+using WiseCart_Web.Models; // Kendi proje isminle aynı olmalı
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// --- 1. VERİTABANI BAĞLANTISI (EKLENEN KISIM) ---
+// appsettings.json dosyasındaki "DefaultConnection" ismini okur.
+builder.Services.AddDbContext<WiseCartDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// MVC Servislerini Ekle
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Hata Ayıklama (Development) Modu
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -20,6 +27,7 @@ app.UseRouting();
 
 app.UseAuthorization();
 
+// Varsayılan Rota (Ana Sayfa)
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

@@ -1,0 +1,33 @@
+@model IEnumerable<WiseCart_Web.Models.Product>
+
+@{
+    ViewData["Title"] = "Ürünler";
+}
+
+<div class="container mt-5">
+    <h2 class="text-center mb-4">✨ Vitrin Ürünleri</h2>
+    
+    <div class="row">
+        @foreach (var item in Model) {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "https://via.placeholder.com/300x200?text=Urun+Resmi" : item.ImageUrl)" 
+                         class="card-img-top" alt="@item.Name" style="height: 200px; object-fit: contain; padding: 10px;">
+                    
+                    <div class="card-body">
+                        <h5 class="card-title text-truncate">@item.Name</h5>
+                        <p class="card-text">
+                            <span class="badge bg-primary">@item.Category?.Name</span>
+                            <span class="badge bg-secondary">@item.Brand?.Name</span>
+                        </p>
+                        <h4 class="text-success">@item.CurrentPrice?.ToString("N0") TL</h4>
+                    </div>
+                    
+                    <div class="card-footer bg-white border-top-0">
+                        <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-primary w-100">Detayları Gör & AI Analiz</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
