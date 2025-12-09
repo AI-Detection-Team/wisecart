@@ -15,16 +15,24 @@ except:
     print("⚠️ Model bulunamadı. İstatistik Modu Aktif.")
     model = None
 
-# Veri setini hafızaya al (Ortalama hesaplamak için şart)
 try:
     df = pd.read_csv("tum_urunler_v3.csv")
-    # Fiyatı sayıya çevir (Garanti temizlik)
+    # Fiyatı sayıya çevir (Garanti olsun)
     df['Fiyat'] = df['Fiyat'].astype(str).str.replace("TL","").str.replace(".","").str.replace(",",".")
     df['Fiyat'] = pd.to_numeric(df['Fiyat'], errors='coerce')
     print(f"✅ Veri Seti Hazır: {len(df)} ürün.")
-except:
+except Exception as e:
+    print(f"❌ Veri seti yüklenemedi: {e}")
     df = pd.DataFrame()
-    print("❌ Veri seti okunamadı! İstatistikler çalışmayabilir.")
+
+# --- PARA FORMATI FONKSİYONU ---
+def format_money(value):
+    """Sayıyı 25.000 formatına çevirir"""
+    try:
+        # Binlik ayracı olarak nokta kullan
+        return "{:,.0f}".format(value).replace(",", ".")
+    except:
+        return str(value)
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -37,27 +45,26 @@ def predict():
         # --- TAHMİN MEKANİZMASI ---
         tahmin = 0
         
-        # Yöntem 1: Varsa Veri Setinden Ortalamayı Al (En Gerçekçi Yöntem)
         if not df.empty:
-            # Aynı marka ve kategorideki ürünlerin ortalaması
+            # Marka ve Kategori ortalaması
             benzer_urunler = df[(df['Kategori'] == kategori) & (df['Marka'] == marka)]
             
             if len(benzer_urunler) > 0:
                 tahmin = benzer_urunler['Fiyat'].mean()
             else:
-                # Marka yoksa sadece kategori ortalaması
                 kategori_urunleri = df[df['Kategori'] == kategori]
                 if len(kategori_urunleri) > 0:
                     tahmin = kategori_urunleri['Fiyat'].mean()
                 else:
-                    tahmin = fiyat # Hiç veri yoksa fiyatın kendisi kabul edilir (Normal)
+                    tahmin = fiyat 
         
-        # Eğer veri setinden sonuç çıkmadıysa fiyatın kendisini baz al
         if tahmin == 0: tahmin = fiyat
 
         # --- DURUM ANALİZİ ---
-        # %20'den fazla fark varsa uyarı ver, yoksa Normal de.
         fark_yuzdesi = ((fiyat - tahmin) / tahmin) * 100
+        
+        # Tahmin Edilen Fiyatı Formatla (Örn: 25.000)
+        tahmin_str = format_money(tahmin)
         
         if fark_yuzdesi > 20:
             durum = "Pahalı 🔴"
@@ -69,14 +76,13 @@ def predict():
             durum = "Normal (Adil Fiyat) 🟡"
             mesaj = "Fiyat, piyasa koşullarına uygun görünüyor."
 
-        # --- ÖNERİLER (RESİMLİ) ---
+        # --- ÖNERİLER (DÜZELTİLDİ) ---
         oneriler = []
         if not df.empty:
-            # Daha ucuz alternatifleri bul
             alternatifler = df[
                 (df['Kategori'] == kategori) & 
                 (df['Fiyat'] < fiyat) & 
-                (df['Fiyat'] > fiyat * 0.5) # Çok ucuzları (kılıf vs) ele
+                (df['Fiyat'] > fiyat * 0.5) 
             ].sort_values(by='Fiyat').head(3)
             
             for _, row in alternatifler.iterrows():
@@ -84,15 +90,16 @@ def predict():
                 if pd.isna(img) or str(img) == "nan" or img == "": 
                     img = "https://via.placeholder.com/150?text=Resim+Yok"
                 
+                # BURASI DÜZELDİ: Fiyatı formatlayarak listeye ekliyoruz
                 oneriler.append({
                     "ad": row['Model'],
-                    "fiyat": row['Fiyat'],
+                    "fiyat": format_money(row['Fiyat']), 
                     "link": row['Link'],
                     "resim": img
                 })
 
         return jsonify({
-            "tahmin": int(tahmin),
+            "tahmin": tahmin_str,
             "durum": durum,
             "mesaj": mesaj,
             "oneriler": oneriler
