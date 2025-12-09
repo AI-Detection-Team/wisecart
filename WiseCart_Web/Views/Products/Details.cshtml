@@ -4,53 +4,75 @@
     ViewData["Title"] = "Detay - " + Model.Name;
 }
 
-<div class="container mt-5">
+<div class="container mt-5 mb-5">
     <div class="card shadow-lg border-0 overflow-hidden">
         <div class="row g-0">
-            <div class="col-md-5 bg-light d-flex align-items-center justify-content-center p-5">
-                <img src="https://via.placeholder.com/500x500?text=@(Model.Category?.Name)" 
-                     class="img-fluid rounded" alt="@Model.Name">
+            <div class="col-md-5 bg-light d-flex align-items-center justify-content-center p-4 position-relative">
+                <img src="@(string.IsNullOrEmpty(Model.ImageUrl) ? "https://via.placeholder.com/500x500?text=Resim+Yok" : Model.ImageUrl)" 
+                     class="img-fluid rounded shadow-sm" alt="@Model.Name" 
+                     style="max-height: 450px; object-fit: contain; mix-blend-mode: multiply;">
+                
+                <span class="position-absolute top-0 start-0 m-3 badge bg-dark fs-6">ID: @Model.Id</span>
             </div>
             
             <div class="col-md-7">
                 <div class="card-body p-5">
                     <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a asp-action="Index">Ürünler</a></li>
+                        <ol class="breadcrumb mb-4">
+                            <li class="breadcrumb-item"><a asp-controller="Products" asp-action="Index" class="text-decoration-none">Ürünler</a></li>
                             <li class="breadcrumb-item active" aria-current="page">@Model.Brand?.Name</li>
                         </ol>
                     </nav>
 
-                    <h2 class="fw-bold mb-3">@Model.Name</h2>
+                    <h2 class="fw-bold text-dark mb-3">@Model.Name</h2>
                     
-                    <div class="d-flex gap-2 mb-4">
-                        <span class="badge bg-primary px-3 py-2">@Model.Category?.Name</span>
-                        <span class="badge bg-dark px-3 py-2">Model: @Model.Model</span>
-                        <span class="badge bg-warning text-dark px-3 py-2">⭐ @Model.ReviewCount Yorum</span>
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2">
+                            <i class="fa-solid fa-layer-group"></i> @Model.Category?.Name
+                        </span>
+                        <span class="badge bg-info bg-opacity-10 text-info border border-info px-3 py-2">
+                            <i class="fa-solid fa-tag"></i> @Model.Brand?.Name
+                        </span>
+                        <span class="badge bg-warning bg-opacity-10 text-warning border border-warning px-3 py-2">
+                            <i class="fa-solid fa-star"></i> @Model.ReviewCount Yorum
+                        </span>
                     </div>
 
-                    <h1 class="display-4 text-success fw-bold mb-4">
-                        @Model.CurrentPrice?.ToString("N0") <small class="fs-4 text-muted">TL</small>
-                    </h1>
+                    <div class="mb-4">
+                        <p class="text-muted mb-0 small">Güncel Satış Fiyatı</p>
+                        <h1 class="display-5 text-success fw-bold">
+                            @Model.CurrentPrice?.ToString("N0") <small class="fs-4 text-muted">TL</small>
+                        </h1>
+                    </div>
 
                     <div class="d-grid gap-3">
-                        <a href="@Model.Url" target="_blank" class="btn btn-outline-dark btn-lg">
-                            🌐 Satıcıya Git (N11/HB)
+                        <a href="@Model.Url" target="_blank" class="btn btn-outline-dark btn-lg rounded-pill">
+                            <i class="fa-solid fa-up-right-from-square"></i> Satıcıya Git (N11/HB)
                         </a>
                         
-                        <button id="btnAnaliz" onclick="analyzePrice()" class="btn btn-primary btn-lg text-white shadow-sm">
-                            🤖 Yapay Zeka ile Fiyat Analizi Yap
+                        <button id="btnAnaliz" onclick="analyzePrice()" class="btn btn-primary btn-lg text-white rounded-pill shadow-sm hover-scale">
+                            <i class="fa-solid fa-robot"></i> Yapay Zeka ile Fiyat Analizi Yap
                         </button>
                     </div>
 
                     <div id="aiResultArea" class="mt-4" style="display:none;">
-                        <div class="card bg-light border-0">
+                        <div class="card bg-light border-0 rounded-3">
                             <div class="card-body">
-                                <h5 class="card-title" id="aiTitle">🔄 Analiz Ediliyor...</h5>
-                                <p class="card-text" id="aiMessage">Veriler Python Yapay Zeka motoruna gönderiliyor, lütfen bekleyin.</p>
-                                <div class="progress mt-2" id="aiLoading">
+                                <h5 class="card-title fw-bold" id="aiTitle">🔄 Analiz Ediliyor...</h5>
+                                <p class="card-text mb-2" id="aiMessage">Veriler Python Yapay Zeka motoruna gönderiliyor, lütfen bekleyin.</p>
+                                
+                                <div class="progress mt-2" id="aiLoading" style="height: 5px;">
                                     <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
                                 </div>
+
+                                <div id="recommendations" class="mt-4 pt-3 border-top" style="display:none;">
+                                    <h6 class="fw-bold text-success mb-3">
+                                        <i class="fa-solid fa-lightbulb"></i> Sizin İçin Daha Uygun Alternatifler:
+                                    </h6>
+                                    <div class="list-group list-group-flush rounded-3" id="recList">
+                                        </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -68,13 +90,19 @@
         const title = document.getElementById("aiTitle");
         const msg = document.getElementById("aiMessage");
         const loading = document.getElementById("aiLoading");
+        const recArea = document.getElementById("recommendations");
+        const recList = document.getElementById("recList");
 
-        // UI Güncelle
+        // UI Hazırlığı
         btn.disabled = true;
         area.style.display = "block";
+        loading.style.display = "flex";
+        recArea.style.display = "none";
+        recList.innerHTML = ""; // Listeyi temizle
         title.innerText = "🔄 Analiz Ediliyor...";
-        title.className = "card-title text-primary";
-        
+        title.className = "card-title text-primary fw-bold";
+        msg.innerText = "Yapay Zeka (ML) modeli fiyatı piyasa verileriyle kıyaslıyor...";
+
         // Ürün Verisi
         const productData = {
             Marka: "@Model.Brand?.Name",
@@ -94,30 +122,56 @@
 
             const result = await response.json();
 
-            // Sonucu Göster
+            // Yüklemeyi gizle
             loading.style.display = "none";
             
+            // SONUCU GÖSTER
             if (result.durum.includes("Ucuz")) {
                 title.innerText = "✅ " + result.durum;
                 title.className = "card-title text-success fw-bold";
-                msg.innerHTML = `<strong>Harika Fırsat!</strong><br>AI Tahmini: <strong>${result.tahmin} TL</strong><br>${result.mesaj}`;
+                msg.innerHTML = `<strong>Fırsat Ürünü!</strong><br>AI Tahmini: <strong>${result.tahmin} TL</strong><br>Bu ürün piyasa değerinin altında.`;
             } else if (result.durum.includes("Pahalı")) {
                 title.innerText = "🔴 " + result.durum;
                 title.className = "card-title text-danger fw-bold";
-                msg.innerHTML = `<strong>Dikkat!</strong><br>AI Tahmini: <strong>${result.tahmin} TL</strong><br>Bu ürün piyasa değerinin üzerinde görünüyor.`;
+                msg.innerHTML = `<strong>Dikkat!</strong><br>AI Tahmini: <strong>${result.tahmin} TL</strong><br>Bu ürün olması gerekenden pahalı görünüyor.`;
             } else {
                 title.innerText = "🟡 " + result.durum;
                 title.className = "card-title text-warning fw-bold";
                 msg.innerHTML = `<strong>Normal Fiyat.</strong><br>AI Tahmini: <strong>${result.tahmin} TL</strong><br>Fiyat piyasa ortalamasında.`;
             }
 
+            // ÖNERİLER VARSA GÖSTER
+            if (result.oneriler && result.oneriler.length > 0) {
+                recArea.style.display = "block";
+                result.oneriler.forEach(item => {
+                    const html = `
+                        <a href="${item.link}" target="_blank" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3">
+                            <div class="d-flex align-items-center">
+                                <img src="${item.resim}" class="rounded border" style="width:50px; height:50px; object-fit:contain; margin-right:15px; background:white;">
+                                <div>
+                                    <h6 class="mb-0 fw-bold text-dark">${item.ad}</h6>
+                                    <small class="text-muted">Alternatif Seçenek</small>
+                                </div>
+                            </div>
+                            <span class="badge bg-success rounded-pill fs-6">${item.fiyat} TL</span>
+                        </a>
+                    `;
+                    recList.innerHTML += html;
+                });
+            }
+
         } catch (error) {
             loading.style.display = "none";
             title.innerText = "❌ Bağlantı Hatası";
             title.className = "card-title text-danger";
-            msg.innerText = "Python Yapay Zeka servisine ulaşılamadı. Pınar'ın servisi (api_server.py) açık mı?";
+            msg.innerText = "Python servisine ulaşılamadı. Lütfen 'api_server.py' kodunun çalıştığından emin olun.";
+            console.error(error);
         } finally {
             btn.disabled = false;
         }
     }
 </script>
+
+<style>
+    .hover-scale:hover { transform: scale(1.02); transition: 0.2s; }
+</style>
