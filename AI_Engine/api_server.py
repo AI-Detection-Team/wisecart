@@ -59,61 +59,79 @@ except Exception as e:
 
 # Modeli Yükle
 try:
+    # Bu model artık bir Pipeline (İçinde TF-IDF + Regressor var)
     model = joblib.load("price_model.pkl")
-    print("✅ Model Yüklendi.")
+    print("✅ Şampiyon Model Yüklendi.")
 except:
     model = None
 
-# --- PARA FORMATI (GÖSTERİM İÇİN) ---
+# Veri setini yükle (Öneriler için)
+try:
+    df = pd.read_csv("tum_urunler_v3.csv")
+    # Fiyatı sayıya çevir
+    df['Fiyat'] = df['Fiyat'].astype(str).str.replace("TL","").str.replace(".","").str.replace(",",".")
+    df['Fiyat'] = pd.to_numeric(df['Fiyat'], errors='coerce')
+    print(f"✅ Veri Seti Hazır: {len(df)} ürün.")
+except:
+    df = pd.DataFrame()
+
+# Para Formatı
 def format_money(value):
-    return "{:,.0f}".format(value).replace(",", ".")
+    try: return "{:,.0f}".format(value).replace(",", ".")
+    except: return str(value)
 
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.json
     try:
-        # Gelen fiyatı da aynı fonksiyonla temizle
-        raw_price = data.get('Fiyat', 0)
-        fiyat = force_clean_price(raw_price)
-        
+        # Gelen veriler
+        fiyat = float(data.get('Fiyat', 0))
         marka = data.get('Marka', '')
         kategori = data.get('Kategori', '')
-        
-        # --- TAHMİN ALGORİTMASI ---
+        urun_adi = data.get('Model', '') # YENİ: Ürün ismini de alıyoruz
+
+        # --- A. YAPAY ZEKA TAHMİNİ ---
         tahmin = 0
-        
-        # 1. İstatistiksel Yaklaşım (Daha Güvenilir)
-        if not df.empty:
-            # Aynı marka ve kategorideki ortalamayı bul
-            benzerler = df[(df['Kategori'] == kategori) & (df['Marka'] == marka)]
-            
-            if len(benzerler) > 5: # En az 5 örnek varsa ortalamasını al
-                tahmin = benzerler['Fiyat'].mean()
+        if model:
+            try:
+                # Modelin beklediği formatta DataFrame oluştur
+                # Sütun isimleri eğitimdekiyle (train_model.py) AYNI olmalı
+                input_df = pd.DataFrame([{
+                    'Model': urun_adi, 
+                    'Marka': marka, 
+                    'Kategori': kategori
+                }])
+                
+                # Pipeline her şeyi (Encoding, TF-IDF) kendi halleder
+                tahmin = model.predict(input_df)[0]
+            except Exception as e:
+                print(f"Model Hatası: {e}")
+                tahmin = 0 # Model çalışmazsa istatistiğe düş
+
+        # --- B. İSTATİSTİK YEDEĞİ (Model Hata Verirse) ---
+        if tahmin == 0:
+            if not df.empty:
+                benzerler = df[(df['Kategori'] == kategori) & (df['Marka'] == marka)]
+                if len(benzerler) > 0: tahmin = benzerler['Fiyat'].mean()
+                else: tahmin = fiyat
             else:
-                # Marka yoksa sadece kategori ortalaması
-                kat_benzerler = df[df['Kategori'] == kategori]
-                if len(kat_benzerler) > 0:
-                    tahmin = kat_benzerler['Fiyat'].mean()
+                tahmin = fiyat
+
+        # --- C. DURUM ANALİZİ ---
+        fark_yuzdesi = ((fiyat - tahmin) / tahmin) * 100
+        tahmin_str = format_money(tahmin)
         
-        # Eğer veri setinden mantıklı bir şey çıkmazsa veya çok uçuksa
-        # Tahmini, girilen fiyatın makul bir aralığına çek (Hocaya sunum kurtarıcı)
-        if tahmin == 0 or tahmin > fiyat * 3 or tahmin < fiyat * 0.3:
-            tahmin = fiyat * 0.95 # "Biraz pahalı" varsayımı
-            
-        # Durum Analizi
-        fark = ((fiyat - tahmin) / tahmin) * 100
-        
-        if fark > 15:
+        if fark_yuzdesi > 15:
             durum = "Pahalı 🔴"
-            mesaj = f"Bu ürün, {marka} piyasa ortalamasından yüksek."
-        elif fark < -15:
+            mesaj = f"Yapay Zeka analizine göre bu ürün, özelliklerine kıyasla %{int(fark_yuzdesi)} daha pahalı."
+        elif fark_yuzdesi < -15:
             durum = "Ucuz (Fırsat) 🟢"
-            mesaj = "Fiyat piyasa ortalamasının altında, iyi bir fırsat!"
+            mesaj = f"Bu ürün piyasa değerinin %{int(abs(fark_yuzdesi))} altında! Fırsat olabilir."
         else:
             durum = "Adil Fiyat 🟡"
-            mesaj = "Ürün tam piyasa değerinde."
+            mesaj = "Fiyat, ürünün özelliklerine ve piyasa koşullarına uygun."
 
-        # --- ÖNERİ MOTORU (DÜZELTİLDİ) ---
+        # --- D. ÖNERİLER ---
         oneriler = []
         if not df.empty:
             # Mantık: Aynı kategori, Fiyatı asıl üründen DÜŞÜK ama çok da ölü olmayan (%40 - %100 arası)
@@ -150,5 +168,5 @@ def predict():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    print("🚀 API Hazır: http://localhost:5000")
+    print("🚀 Akıllı API (v2) Başladı...")
     app.run(port=5000)
