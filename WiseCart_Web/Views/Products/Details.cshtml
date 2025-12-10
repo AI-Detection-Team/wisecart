@@ -111,13 +111,13 @@
         // 2. Veri Hazırlığı
         // Fiyatı string formatından sayıya çeviriyoruz (Nokta virgül sorunu olmasın)
         const rawPrice = @(Model.CurrentPrice?.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) ?? "0");
-        
-        const productData = {
-            Marka: "@Html.Raw(Model.Brand?.Name)",
-            Kategori: "@Html.Raw(Model.Category?.Name)",
-            Fiyat: rawPrice
-        };
-
+       const productData = {
+    Marka: "@Html.Raw(Model.Brand?.Name)",
+    Kategori: "@Html.Raw(Model.Category?.Name)",
+    // YENİ: Ürün ismini de gönderiyoruz ki AI kelimeleri okusun
+    Model: "@Html.Raw(Model.Name)", 
+    Fiyat: rawPrice
+};
         try {
             // 3. API İsteği
             const response = await fetch("http://localhost:5000/predict", {
