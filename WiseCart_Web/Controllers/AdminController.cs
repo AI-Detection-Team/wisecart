@@ -16,15 +16,30 @@ namespace WiseCart_Web.Controllers
             _context = context;
         }
 
-        // 1. LİSTELEME (READ)
-        public async Task<IActionResult> Index()
+        // 1. LİSTELEME (READ) - SAYFALAMA EKLENDİ
+        public async Task<IActionResult> Index(int page = 1)
         {
-            var products = await _context.Products
+            int pageSize = 20; // Her sayfada 20 ürün göster
+
+            // Sorguyu hazırla
+            var productsQuery = _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
-                .OrderByDescending(p => p.Id)
-                .Take(100) // Performans için son 100 ürün
+                .OrderByDescending(p => p.Id); // En yeniler en başta
+
+            // Toplam sayıyı View'a gönder (İstatistik kartı için)
+            ViewBag.TotalProducts = await productsQuery.CountAsync();
+            
+            // Sayfalanmış Veriyi Çek
+            var products = await productsQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
+
+            // Sayfalama bilgilerini View'a gönder
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = (int)Math.Ceiling(ViewBag.TotalProducts / (double)pageSize);
+
             return View(products);
         }
 
@@ -39,6 +54,10 @@ namespace WiseCart_Web.Controllers
                 var history = _context.PriceHistories.Where(h => h.ProductId == id);
                 _context.PriceHistories.RemoveRange(history);
                 
+                // Varsa yorumları da sil (Eğer yorum tablosu varsa)
+                // var comments = _context.Comments.Where(c => c.ProductId == id);
+                // _context.Comments.RemoveRange(comments);
+
                 _context.Products.Remove(product);
                 await _context.SaveChangesAsync();
             }
@@ -58,23 +77,33 @@ namespace WiseCart_Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Product product)
         {
-            // Validasyon kontrolünü biraz esnetelim ki hata vermesin
+            // Validasyon kontrolünü esnetiyoruz (Resim vs boş olabilir)
             if (ModelState.IsValid || true) 
             {
                 // Boş alanları dolduralım
                 if(string.IsNullOrEmpty(product.ImageUrl)) 
                     product.ImageUrl = "https://via.placeholder.com/500?text=Yeni+Urun";
                 
+                // Tarih gibi alanlar varsa ekle
+                // product.CreatedAt = DateTime.Now;
+
                 _context.Add(product);
                 await _context.SaveChangesAsync();
                 
-                // Fiyat geçmişine de ekle
-                var history = new PriceHistory { ProductId = product.Id, Price = product.CurrentPrice ?? 0, Date = DateTime.Now };
+                // Fiyat geçmişine de ilk kaydı ekle
+                var history = new PriceHistory 
+                { 
+                    ProductId = product.Id, 
+                    Price = product.CurrentPrice ?? 0, 
+                    Date = DateTime.Now 
+                };
                 _context.Add(history);
                 await _context.SaveChangesAsync();
 
                 return RedirectToAction(nameof(Index));
             }
+            
+            // Hata varsa formu tekrar göster
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
             ViewData["BrandId"] = new SelectList(_context.Brands, "Id", "Name", product.BrandId);
             return View(product);

@@ -1,34 +1,68 @@
 @model IEnumerable<WiseCart_Web.Models.Product>
-
 @{
     ViewData["Title"] = "Yönetim Paneli";
+    Layout = "_Layout"; 
+    
+    // Controller'dan gelen sayfa bilgileri
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalProducts = ViewBag.TotalProducts ?? 0;
 }
 
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-dark"><i class="fa-solid fa-user-shield"></i> Yönetim Paneli</h2>
-        <a asp-action="Create" class="btn btn-success rounded-pill px-4">
-            <i class="fa-solid fa-plus"></i> Yeni Ürün Ekle
+        <div>
+            <h2 class="fw-bold text-dark"><i class="fa-solid fa-user-shield"></i> Yönetim Paneli</h2>
+            <p class="text-muted mb-0">Toplam <strong>@totalProducts</strong> ürün yönetiliyor.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-success btn-lg rounded-pill shadow-sm">
+            <i class="fa-solid fa-plus-circle"></i> Yeni Ürün Ekle
         </a>
     </div>
 
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="card bg-primary text-white p-3 shadow-sm">
-                <h5>Toplam Ürün</h5>
-                <h2 class="fw-bold">@Model.Count()</h2>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">Toplam Ürün</h6>
+                        <h3 class="fw-bold mb-0">@totalProducts</h3>
+                    </div>
+                    <i class="fa-solid fa-box-open fa-2x opacity-50"></i>
+                </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card bg-warning text-dark p-3 shadow-sm">
-                <h5>Veritabanı</h5>
-                <h2 class="fw-bold">MSSQL</h2>
+        <div class="col-md-3">
+            <div class="card bg-success text-white border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">Veritabanı</h6>
+                        <h3 class="fw-bold mb-0">MSSQL</h3>
+                    </div>
+                    <i class="fa-solid fa-database fa-2x opacity-50"></i>
+                </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card bg-info text-white p-3 shadow-sm">
-                <h5>Kullanıcı</h5>
-                <h2 class="fw-bold">Admin</h2>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">Yetki</h6>
+                        <h3 class="fw-bold mb-0">Admin</h3>
+                    </div>
+                    <i class="fa-solid fa-key fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">Sayfa</h6>
+                        <h3 class="fw-bold mb-0">@currentPage / @totalPages</h3>
+                    </div>
+                    <i class="fa-solid fa-file-lines fa-2x opacity-50"></i>
+                </div>
             </div>
         </div>
     </div>
@@ -38,32 +72,38 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="bg-light">
                     <tr>
-                        <th class="ps-4">Ürün</th>
-                        <th>Kategori</th>
+                        <th class="ps-4">ID</th>
+                        <th>Görsel</th>
+                        <th>Ürün Adı</th>
                         <th>Marka</th>
                         <th>Fiyat</th>
+                        <th>Kategori</th>
                         <th class="text-end pe-4">İşlemler</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var item in Model) {
                         <tr>
-                            <td class="ps-4">
-                                <div class="d-flex align-items-center">
-                                    <img src="@item.ImageUrl" class="rounded border me-3" style="width: 40px; height: 40px; object-fit: contain;">
-                                    <div class="text-truncate" style="max-width: 250px;">
-                                        <strong>@item.Name</strong>
-                                    </div>
+                            <td class="ps-4 text-muted">#@item.Id</td>
+                            <td>
+                                <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "https://via.placeholder.com/50" : item.ImageUrl)" 
+                                     class="rounded border bg-white" 
+                                     style="width: 40px; height: 40px; object-fit: contain;"
+                                     onerror="this.src='https://via.placeholder.com/50?text=Yok'">
+                            </td>
+                            <td>
+                                <div class="text-truncate" style="max-width: 250px;" title="@item.Name">
+                                    <strong>@item.Name</strong>
                                 </div>
                             </td>
-                            <td><span class="badge bg-secondary">@item.Category?.Name</span></td>
-                            <td>@item.Brand?.Name</td>
-                            <td class="text-success fw-bold">@item.CurrentPrice?.ToString("N0") TL</td>
+                            <td><span class="badge bg-info text-dark">@item.Brand?.Name</span></td>
+                            <td class="fw-bold text-success">@item.CurrentPrice?.ToString("N0") TL</td>
+                            <td><span class="badge bg-secondary bg-opacity-10 text-secondary border">@item.Category?.Name</span></td>
                             <td class="text-end pe-4">
                                 <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline;"
-                                      onsubmit="return confirm('Bu ürünü silmek istediğinize emin misiniz?');">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">
-                                        <i class="fa-solid fa-trash"></i> Sil
+                                      onsubmit="return confirm('❗ DİKKAT: @item.Name ürününü silmek istediğinize emin misiniz?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Sil">
+                                        <i class="fa-solid fa-trash"></i>
                                     </button>
                                 </form>
                             </td>
@@ -72,5 +112,27 @@
                 </tbody>
             </table>
         </div>
-    </div>
+        
+        <div class="card-footer bg-white py-3">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)">
+                            <i class="fa-solid fa-chevron-left"></i> Önceki
+                        </a>
+                    </li>
+
+                    <li class="page-item disabled">
+                        <span class="page-link text-dark fw-bold">Sayfa @currentPage / @totalPages</span>
+                    </li>
+
+                    <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)">
+                            Sonraki <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+        </div>
 </div>
