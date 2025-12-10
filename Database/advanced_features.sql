@@ -97,3 +97,46 @@ BEGIN
     ORDER BY CurrentPrice ASC;
 END;
 GO
+
+
+
+
+--10.12.2025
+-- Fiyat Asla Negatif Olamaz
+ALTER TABLE Products ADD CONSTRAINT CK_Price_Positive CHECK (CurrentPrice >= 0);
+
+-- Ürün İsimleri Tekrar Etmesin (Aynı isimle 2. ürün girilemesin)
+-- (Not: Eğer veride tekrar varsa bu hata verir, önce temizlik gerekebilir)
+-- ALTER TABLE Products ADD CONSTRAINT UQ_ProductName UNIQUE (Name);
+
+-- Stok/Yorum Sayısı 0'dan küçük olamaz
+ALTER TABLE Products ADD CONSTRAINT CK_Review_Positive CHECK (ReviewCount >= 0);
+
+
+-- Kategori Bazlı Fiyat Analizi Raporu
+CREATE VIEW vw_CategoryAnalytics AS
+SELECT 
+    c.Name AS Kategori,
+    COUNT(p.Id) AS UrunSayisi,
+    AVG(p.CurrentPrice) AS OrtalamaFiyat,
+    MAX(p.CurrentPrice) AS EnPahali,
+    MIN(p.CurrentPrice) AS EnUcuz
+FROM Products p
+JOIN Categories c ON p.CategoryId = c.Id
+GROUP BY c.Name;
+GO
+
+
+
+
+-- Fiyat Aralığına Göre Ürün Getiren Fonksiyon
+CREATE PROCEDURE sp_GetProductsByRange
+    @MinPrice float,
+    @MaxPrice float
+AS
+BEGIN
+    SELECT Name, CurrentPrice FROM Products
+    WHERE CurrentPrice BETWEEN @MinPrice AND @MaxPrice
+    ORDER BY CurrentPrice ASC
+END;
+GO
