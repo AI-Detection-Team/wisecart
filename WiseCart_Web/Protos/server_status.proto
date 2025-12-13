@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option csharp_namespace = "WiseCart_Web.Protos";
+
+package status;
+
+// Servis Tanımı
+service StatusCheck {
+  rpc GetSystemStatus (Empty) returns (StatusReply);
+}
+
+// Mesaj Türleri
+message Empty {}
+
+message StatusReply {
+  string message = 1;
+}

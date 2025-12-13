@@ -59,6 +59,7 @@
                     </ul>
 
                     @await Component.InvokeAsync("Currency")
+
                     <ul class="navbar-nav">
                         @if (User.Identity.IsAuthenticated)
                         {
@@ -104,7 +105,12 @@
                 <a href="#" class="text-white me-3 text-decoration-none"><i class="fa-brands fa-linkedin fa-lg"></i></a>
                 <a href="#" class="text-white text-decoration-none"><i class="fa-solid fa-envelope fa-lg"></i></a>
             </div>
-            <p class="mb-0 small opacity-75">&copy; 2025 - WiseCart AI Project. Tüm Hakları Saklıdır.</p>
+            
+            <p class="mb-0 small opacity-75">
+                &copy; 2025 - WiseCart AI Project. Tüm Hakları Saklıdır.
+                
+                @await Component.InvokeAsync("GrpcStatus")
+            </p>
         </div>
     </footer>
 
