@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WiseCart_Web.Models;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Net.Http; // SOA Loglama için gerekli
+using System.Net.Http.Json; // JSON formatında veri göndermek için gerekli
 
 namespace WiseCart_Web.Controllers
 {
@@ -14,12 +16,12 @@ namespace WiseCart_Web.Controllers
             _context = context;
         }
 
-        // GET: Products
+        // GET: Products (Filtreleme, Arama ve Sayfalama içerir)
         public async Task<IActionResult> Index(string searchString, string category, int page = 1)
         {
             int pageSize = 24; // Her sayfada kaç ürün görünsün?
 
-            // 1. Sorguyu Hazırla (Henüz veritabanına gitmedi)
+            // 1. Sorguyu Hazırla
             var productsQuery = _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
@@ -37,7 +39,7 @@ namespace WiseCart_Web.Controllers
                 productsQuery = productsQuery.Where(p => p.Name.Contains(searchString) || p.Brand.Name.Contains(searchString));
             }
 
-            // 4. Toplam Sayıyı Bul (Sayfalama için lazım)
+            // 4. Toplam Sayıyı Bul (Sayfalama için)
             int totalItems = await productsQuery.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
@@ -60,6 +62,7 @@ namespace WiseCart_Web.Controllers
             return View(products);
         }
 
+        // GET: Products/Details/5 (SOA Loglama Entegre Edildi)
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -70,6 +73,34 @@ namespace WiseCart_Web.Controllers
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (product == null) return NotFound();
+
+            // --- SOA ENTEGRASYONU: NODE.JS LOGLAMA ---
+            // Kullanıcı bu ürüne baktığında Node.js servisine haber veriyoruz.
+            // Bu işlem "Fire and Forget" (Ateşle ve Unut) mantığıyla yapılır, siteyi yavaşlatmaz.
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    using (var client = new HttpClient())
+                    {
+                        var logData = new
+                        {
+                            // Kullanıcı giriş yapmışsa adını, yapmamışsa "Misafir" yaz
+                            user = User.Identity.IsAuthenticated ? User.Identity.Name : "Misafir",
+                            action = "Ürün Görüntüleme",
+                            details = $"Ürün: {product.Name} (Fiyat: {product.CurrentPrice} TL)"
+                        };
+                        
+                        // Node.js servisine (Port 4000) veri gönder
+                        await client.PostAsJsonAsync("http://localhost:4000/api/log", logData);
+                    }
+                }
+                catch
+                {
+                    // Log servisi kapalıysa site çalışmaya devam etsin, hata verip kullanıcıyı durdurmasın.
+                }
+            });
+            // ------------------------------------------
 
             return View(product);
         }

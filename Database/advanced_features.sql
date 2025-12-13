@@ -102,6 +102,8 @@ GO
 
 
 --10.12.2025
+
+
 -- Fiyat Asla Negatif Olamaz
 ALTER TABLE Products ADD CONSTRAINT CK_Price_Positive CHECK (CurrentPrice >= 0);
 

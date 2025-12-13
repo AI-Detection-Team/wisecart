@@ -1,0 +1,8 @@
+[13.12.2025 19:23:02] KULLANICI: Misafir | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: Raydin R238VAB 23.8" 5 MS 75 Hz HDMI+VGA Full HD Frameless VA LED Monitör (Fiyat: 4029 TL)
+[13.12.2025 19:24:02] KULLANICI: Misafir | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: Philips 243V7QJABF/00 23.8" 5 MS 60 Hz VGA+HDMI+DP Full HD IPS LED Monitör (Fiyat: 6111,36 TL)
+[13.12.2025 19:31:36] KULLANICI: Misafir | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: Philips 243V7QJABF/00 23.8" 5 MS 60 Hz VGA+HDMI+DP Full HD IPS LED Monitör (Fiyat: 6111,36 TL)
+[13.12.2025 19:31:36] KULLANICI: Misafir | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: Philips 243V7QJABF/00 23.8" 5 MS 60 Hz VGA+HDMI+DP Full HD IPS LED Monitör (Fiyat: 6111,36 TL)
+[13.12.2025 19:33:04] KULLANICI: Misafir | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: Philips 243V7QJABF/00 23.8" 5 MS 60 Hz VGA+HDMI+DP Full HD IPS LED Monitör (Fiyat: 6111,36 TL)
+[13.12.2025 19:34:12] KULLANICI: Misafir | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: Dahua LM27-E231 27" 165 Hz 1 Ms Fullhd Ips Led Gaming Oyuncu Monitör (Fiyat: 5519 TL)
+[13.12.2025 19:34:31] KULLANICI: Misafir | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: Verbatim 49591 V PMT-14 14" Touch Tasinabilir Monitör (Fiyat: 9925,44 TL)
+[13.12.2025 19:34:42] KULLANICI: Misafir | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: Dahua Lm27-e231b 27" 180hz 0.5ms Hdmi+dp Fullhd Adaptive-sync Ips Vesa Monitör (Fiyat: 5519 TL)
