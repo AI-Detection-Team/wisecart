@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "Detay - " + Model.Name;
-    // Resim URL kontrolü (Boşsa placeholder kullan)
+    // Resim URL kontrolü
     var imgUrl = !string.IsNullOrWhiteSpace(Model.ImageUrl) ? Model.ImageUrl : "https://via.placeholder.com/500x500?text=Resim+Yok";
 }
 
@@ -51,32 +51,37 @@
 
                     <div class="d-grid gap-3">
                         <a href="@Model.Url" target="_blank" class="btn btn-outline-dark btn-lg rounded-pill">
-                            <i class="fa-solid fa-up-right-from-square"></i> Satıcıya Git (N11)
+                            <i class="fa-solid fa-up-right-from-square"></i> Satıcıya Git (Link)
                         </a>
                         
-                        <button id="btnAnaliz" onclick="analyzePrice()" class="btn btn-primary btn-lg text-white rounded-pill shadow-sm hover-scale">
-                            <i class="fa-solid fa-robot"></i> Yapay Zeka ile Fiyat Analizi Yap
+                        <button id="analyzeBtn" class="btn btn-primary btn-lg text-white rounded-pill shadow-sm hover-scale">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Yapay Zeka ile Fiyat Analizi Yap
                         </button>
                     </div>
 
-                    <div id="aiResultArea" class="mt-4" style="display:none;">
-                        <div class="card border-0 rounded-3 shadow-sm">
-                            <div class="card-body">
-                                <h5 class="card-title fw-bold" id="aiTitle">🔄 Analiz Ediliyor...</h5>
-                                <p class="card-text mb-2 text-muted" id="aiMessage">Veriler Python Yapay Zeka motoruna gönderiliyor...</p>
-                                
-                                <div class="progress mt-2" id="aiLoading" style="height: 6px;">
-                                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
-                                </div>
+                    <div id="ai-loading" class="mt-4 d-none">
+                         <div class="card border-0 rounded-3 shadow-sm bg-white">
+                            <div class="card-body text-center py-4">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="mt-2 text-muted fw-bold">Yapay Zeka Fiyatı Analiz Ediyor...</p>
+                            </div>
+                         </div>
+                    </div>
 
-                                <div id="recommendations" class="mt-4 pt-3 border-top" style="display:none;">
-                                    <h6 class="fw-bold text-success mb-3">
+                    <div id="ai-result" class="mt-4 d-none">
+                        <div class="card border-0 rounded-3 shadow-sm bg-white">
+                            <div class="card-body p-4 text-center">
+                                <span id="ai-durum" class="badge bg-warning text-dark fs-6 px-3 py-2">Hesaplanıyor...</span>
+                                <h2 class="fw-bold mt-3 text-primary" id="ai-tahmin">0 TL</h2>
+                                <p id="ai-mesaj" class="text-muted">Analiz sonucu bekleniyor.</p>
+                                
+                                <div id="suggestions-box" class="mt-3 d-none text-start">
+                                    <hr>
+                                    <h6 class="fw-bold text-success small mb-3">
                                         <i class="fa-solid fa-lightbulb"></i> Sizin İçin Daha Uygun Alternatifler:
                                     </h6>
-                                    <div class="list-group list-group-flush rounded-3" id="recList">
-                                        </div>
+                                    <ul id="ai-suggestions" class="list-group list-group-flush"></ul>
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -88,93 +93,110 @@
 
 @section Scripts {
     <script>
-        // Sayfa yüklendiğinde çalışacak
         document.addEventListener("DOMContentLoaded", function() {
-            // Buton ve Sonuç Kutularını Seç
+            // Elementleri Seç
             const analyzeBtn = document.getElementById("analyzeBtn");
             const loadingDiv = document.getElementById("ai-loading");
             const resultDiv = document.getElementById("ai-result");
+
+            if (!analyzeBtn) {
+                console.error("HATA: Analiz butonu bulunamadı!");
+                return;
+            }
+
+            // --- KRİTİK DÜZELTME BURADA ---
+            // C# verilerini güvenli bir şekilde JSON formatına çeviriyoruz.
+            // Bu yöntem tırnak işaretlerini, enter karakterlerini otomatik düzeltir.
+            const modelName = @Json.Serialize(Model.Name ?? "");
+            const brandName = @Json.Serialize(Model.Brand?.Name ?? "");
+            const categoryName = @Json.Serialize(Model.Category?.Name ?? "");
             
-            // Fiyatı C#'dan al, temizle (TL ve noktaları kaldır)
-            let rawPrice = "@Model.CurrentPrice".replace("TL", "").replace(/\./g, "").replace(",", ".");
-            
-            // Analiz Butonuna Tıklanınca
+            // Fiyatı güvenli şekilde sayıya çevir (Nokta/Virgül sorununu çözer)
+            const rawPriceCsharp = "@Model.CurrentPrice"; 
+            let priceVal = parseFloat(rawPriceCsharp.replace("TL", "").replace(/\./g, "").replace(",", ".")) || 0;
+
+            console.log("✅ Sayfa Hazır. Ürün:", modelName);
+
             analyzeBtn.addEventListener("click", function() {
-                // 1. Yükleniyor animasyonunu göster
+                console.log("🖱️ Butona basıldı!");
+
+                // Görünüm Ayarları
                 loadingDiv.classList.remove("d-none");
                 resultDiv.classList.add("d-none");
                 analyzeBtn.disabled = true;
-                analyzeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Analiz Yapılıyor...';
+                analyzeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Hesaplanıyor...';
 
-                // 2. API'ye Gönderilecek Veri Paketi
+                // API'ye Gidecek Veri Paketi
                 const productData = {
-                    Marka: "@Html.Raw(Model.Brand?.Name ?? "")",
-                    Kategori: "@Html.Raw(Model.Category?.Name ?? "")",
-                    Model: "@Html.Raw(Model.Name ?? "")", // YENİ: Ürün ismini ekledik!
-                    Fiyat: parseFloat(rawPrice)
+                    Marka: brandName,
+                    Kategori: categoryName,
+                    Model: modelName,
+                    Fiyat: priceVal
                 };
 
-                console.log("API'ye giden veri:", productData); // Tarayıcı konsolundan kontrol edebilirsiniz
+                console.log("📡 API İsteği:", productData);
 
-                // 3. Python API'ye İstek At (Port 5000)
+                // İstek At (Port 5000)
                 fetch('http://localhost:5000/predict', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(productData)
                 })
-                .then(response => response.json())
+                .then(res => {
+                    if (!res.ok) throw new Error("Sunucu Hatası: " + res.status);
+                    return res.json();
+                })
                 .then(data => {
-                    // 4. Sonuçları Ekrana Bas
+                    console.log("📥 Sonuç Geldi:", data);
+
+                    // Sonuçları Bas
                     document.getElementById("ai-tahmin").innerText = data.tahmin + " TL";
                     document.getElementById("ai-mesaj").innerText = data.mesaj;
                     
-                    const durumBadge = document.getElementById("ai-durum");
-                    durumBadge.innerText = data.durum;
+                    const badge = document.getElementById("ai-durum");
+                    badge.innerText = data.durum;
                     
-                    // Renk Ayarı
-                    durumBadge.className = "badge rounded-pill fs-6 px-3 py-2"; // Sıfırla
-                    if (data.durum.includes("Pahalı")) durumBadge.classList.add("bg-danger");
-                    else if (data.durum.includes("Ucuz")) durumBadge.classList.add("bg-success");
-                    else durumBadge.classList.add("bg-warning", "text-dark");
+                    // Renkler
+                    badge.className = "badge rounded-pill fs-6 px-3 py-2"; 
+                    if(data.durum.includes("Pahalı")) badge.classList.add("bg-danger");
+                    else if(data.durum.includes("Ucuz")) badge.classList.add("bg-success");
+                    else badge.classList.add("bg-warning", "text-dark");
 
-                    // Öneriler (Varsa)
-                    const suggestionsList = document.getElementById("ai-suggestions");
-                    suggestionsList.innerHTML = ""; // Temizle
-                    
+                    // Öneriler
+                    const list = document.getElementById("ai-suggestions");
+                    list.innerHTML = "";
                     if (data.oneriler && data.oneriler.length > 0) {
                         data.oneriler.forEach(item => {
-                            const li = document.createElement("li");
-                            li.className = "list-group-item d-flex justify-content-between align-items-center";
-                            li.innerHTML = `
-                                <div class="d-flex align-items-center">
-                                    <img src="${item.resim}" style="width:40px; height:40px; object-fit:contain" class="me-2 border rounded">
-                                    <a href="${item.link}" target="_blank" class="text-decoration-none text-dark fw-bold small">${item.ad.substring(0, 30)}...</a>
-                                </div>
-                                <span class="badge bg-primary rounded-pill">${item.fiyat} TL</span>
-                            `;
-                            suggestionsList.appendChild(li);
+                            list.innerHTML += `
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <img src="${item.resim}" style="width:30px; height:30px; object-fit:contain; margin-right:10px;" onerror="this.src='https://via.placeholder.com/30'">
+                                        <a href="${item.link}" target="_blank" class="fw-bold text-dark text-decoration-none small">${item.ad.substring(0,30)}...</a>
+                                    </div>
+                                    <span class="badge bg-primary">${item.fiyat} TL</span>
+                                </li>`;
                         });
                         document.getElementById("suggestions-box").classList.remove("d-none");
                     } else {
                         document.getElementById("suggestions-box").classList.add("d-none");
                     }
 
-                    // Görünür Yap
                     loadingDiv.classList.add("d-none");
                     resultDiv.classList.remove("d-none");
                 })
-                .catch(error => {
-                    alert("Yapay Zeka Bağlantı Hatası! api_server.py çalışıyor mu?");
-                    console.error('Hata:', error);
+                .catch(err => {
+                    console.error("API Hatası:", err);
+                    alert("HATA: Yapay Zeka servisine bağlanılamadı! Pınar'ın terminalini (Port 5000) kontrol edin.");
                 })
                 .finally(() => {
                     analyzeBtn.disabled = false;
-                    analyzeBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Fiyat Analizi Yap';
+                    analyzeBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Yapay Zeka ile Fiyat Analizi Yap';
                 });
             });
         });
     </script>
 }
+
 <style>
-    .hover-scale:hover { transform: scale(1.05); transition: 0.2s; }
+    .hover-scale:hover { transform: scale(1.02); transition: 0.2s; }
 </style>

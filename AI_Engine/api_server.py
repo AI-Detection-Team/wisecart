@@ -5,168 +5,144 @@ import pandas as pd
 import numpy as np
 
 app = Flask(__name__)
-CORS(app)
+# Tüm kaynaklardan gelen isteklere izin ver (CORS Hatasını Çözer)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
-# --- FİYAT TEMİZLEME MOTORU (ZORLAMALI) ---
-def force_clean_price(value):
-    """
-    Gelen veriyi ne olursa olsun doğru Float'a çevirir.
-    Örn: "29.496,50" -> 29496.5
-    Örn: "1.595" -> 1595.0
-    """
-    if pd.isna(value): return 0.0
-    s = str(value).strip().replace("TL", "").replace(" ", "")
-    
-    # 1. Eğer zaten düzgün sayıysa (29496)
-    if s.isdigit(): return float(s)
-    
-    # 2. Eğer "29.496,50" formatıysa (Türkçe)
-    if "." in s and "," in s:
-        s = s.replace(".", "")  # Binlik noktasını at
-        s = s.replace(",", ".") # Kuruş virgülünü nokta yap
-    
-    # 3. Eğer sadece nokta varsa (29.496) -> Genelde binliktir
-    elif "." in s:
-        parts = s.split(".")
-        # Eğer noktadan sonra 3 hane varsa (1.500) kesin binliktir, sil.
-        if len(parts[-1]) == 3:
-            s = s.replace(".", "")
-        else:
-            # (10.5) gibiyse ondalıktır, dokunma.
-            pass
-            
-    # 4. Eğer sadece virgül varsa (29496,50) -> Nokta yap
-    elif "," in s:
-        s = s.replace(",", ".")
-        
-    try:
-        return float(s)
-    except:
-        return 0.0
+print("🔥 API Sunucusu (Akıllı Mantık v3) Başlatılıyor...")
 
-# --- VERİ YÜKLEME ---
+# 1. Modeli Yükle
+model = None
+try:
+    model = joblib.load("price_model.pkl")
+    print("✅ Model Yüklendi.")
+except:
+    print("⚠️ Model Yok, Tamamen İstatistik Modunda Çalışacak.")
+
+# 2. Veri Setini Yükle (Karşılaştırma İçin Şart)
 df = pd.DataFrame()
 try:
     df = pd.read_csv("tum_urunler_v3.csv")
-    # Veri setindeki fiyatları hemen düzeltelim
-    df['Fiyat'] = df['Fiyat'].apply(force_clean_price)
-    # Hatalı (0 veya çok küçük) fiyatları analizden çıkar
-    df = df[df['Fiyat'] > 50] 
-    print(f"✅ Veri Seti Yüklendi ve Temizlendi: {len(df)} ürün.")
-    print(f"📊 Veri Seti Ortalama Fiyat: {df['Fiyat'].mean():.2f} TL (Kontrol Et!)")
-except Exception as e:
-    print(f"❌ Veri Hatası: {e}")
-
-# Modeli Yükle
-try:
-    # Bu model artık bir Pipeline (İçinde TF-IDF + Regressor var)
-    model = joblib.load("price_model.pkl")
-    print("✅ Şampiyon Model Yüklendi.")
-except:
-    model = None
-
-# Veri setini yükle (Öneriler için)
-try:
-    df = pd.read_csv("tum_urunler_v3.csv")
-    # Fiyatı sayıya çevir
-    df['Fiyat'] = df['Fiyat'].astype(str).str.replace("TL","").str.replace(".","").str.replace(",",".")
+    # Fiyatı Temizle (TL, nokta, virgül karmaşasını çöz)
+    df['Fiyat'] = df['Fiyat'].astype(str).str.replace("TL", "").str.replace(" ", "")
+    # Binlik ayırıcı noktaları sil, kuruş virgülünü nokta yap
+    df['Fiyat'] = df['Fiyat'].apply(lambda x: x.replace(".", "") if x.count(".") > 0 and "," in x else x) 
+    df['Fiyat'] = df['Fiyat'].str.replace(",", ".")
     df['Fiyat'] = pd.to_numeric(df['Fiyat'], errors='coerce')
-    print(f"✅ Veri Seti Hazır: {len(df)} ürün.")
-except:
-    df = pd.DataFrame()
+    
+    print(f"✅ Veri Seti Hazır: {len(df)} ürün hafızada.")
+except Exception as e:
+    print(f"❌ Veri Seti Hatası: {e}")
 
-# Para Formatı
+# Para Formatlayıcı
 def format_money(value):
-    try: return "{:,.0f}".format(value).replace(",", ".")
-    except: return str(value)
+    return "{:,.2f}".format(value).replace(",", "X").replace(".", ",").replace("X", ".")
 
-@app.route('/predict', methods=['POST'])
+@app.route('/predict', methods=['POST', 'OPTIONS'])
 def predict():
-    data = request.json
+    if request.method == 'OPTIONS':
+        return _build_cors_preflight_response()
+
     try:
+        data = request.json
+        print(f"📩 İstek: {data.get('Model')} - {data.get('Fiyat')} TL")
+
         # Gelen veriler
-        fiyat = float(data.get('Fiyat', 0))
+        gelen_fiyat = float(data.get('Fiyat', 0))
         marka = data.get('Marka', '')
         kategori = data.get('Kategori', '')
-        urun_adi = data.get('Model', '') # YENİ: Ürün ismini de alıyoruz
+        urun_adi = data.get('Model', '')
 
-        # --- A. YAPAY ZEKA TAHMİNİ ---
+        # --- 1. MANTIKLI TAHMİN MOTORU ---
         tahmin = 0
+        kaynak = "Yapay Zeka"
+
+        # A. Önce Modelden Tahmin İste
         if model:
             try:
-                # Modelin beklediği formatta DataFrame oluştur
-                # Sütun isimleri eğitimdekiyle (train_model.py) AYNI olmalı
-                input_df = pd.DataFrame([{
-                    'Model': urun_adi, 
-                    'Marka': marka, 
-                    'Kategori': kategori
-                }])
-                
-                # Pipeline her şeyi (Encoding, TF-IDF) kendi halleder
+                input_df = pd.DataFrame([{'Model': urun_adi, 'Marka': marka, 'Kategori': kategori}])
                 tahmin = model.predict(input_df)[0]
-            except Exception as e:
-                print(f"Model Hatası: {e}")
-                tahmin = 0 # Model çalışmazsa istatistiğe düş
-
-        # --- B. İSTATİSTİK YEDEĞİ (Model Hata Verirse) ---
-        if tahmin == 0:
-            if not df.empty:
-                benzerler = df[(df['Kategori'] == kategori) & (df['Marka'] == marka)]
-                if len(benzerler) > 0: tahmin = benzerler['Fiyat'].mean()
-                else: tahmin = fiyat
-            else:
-                tahmin = fiyat
-
-        # --- C. DURUM ANALİZİ ---
-        fark_yuzdesi = ((fiyat - tahmin) / tahmin) * 100
-        tahmin_str = format_money(tahmin)
+            except: pass
         
-        if fark_yuzdesi > 15:
-            durum = "Pahalı 🔴"
-            mesaj = f"Yapay Zeka analizine göre bu ürün, özelliklerine kıyasla %{int(fark_yuzdesi)} daha pahalı."
-        elif fark_yuzdesi < -15:
-            durum = "Ucuz (Fırsat) 🟢"
-            mesaj = f"Bu ürün piyasa değerinin %{int(abs(fark_yuzdesi))} altında! Fırsat olabilir."
-        else:
-            durum = "Adil Fiyat 🟡"
-            mesaj = "Fiyat, ürünün özelliklerine ve piyasa koşullarına uygun."
+        # B. Veritabanı Ortalamasını Bul (Referans Noktası)
+        ortalama_fiyat = gelen_fiyat
+        if not df.empty:
+            # Aynı kategorideki ve markadaki ürünlerin ortalaması
+            benzerler = df[(df['Kategori'] == kategori) & (df['Marka'] == marka)]
+            if len(benzerler) > 5:
+                ortalama_fiyat = benzerler['Fiyat'].mean()
+            else:
+                # Marka verisi azsa sadece kategoriye bak
+                genel_benzerler = df[df['Kategori'] == kategori]
+                if not genel_benzerler.empty:
+                    ortalama_fiyat = genel_benzerler['Fiyat'].mean()
 
-        # --- D. ÖNERİLER ---
+        # C. SAÇMALAMA KONTROLÜ (Outlier Detection)
+        # Eğer modelin tahmini, piyasa ortalamasından veya fiyattan 3 kat fazlaysa modele güvenme.
+        if tahmin > (ortalama_fiyat * 3) or tahmin < (ortalama_fiyat / 3) or tahmin == 0:
+            print(f"⚠️ Model saçmaladı ({tahmin:.0f}). İstatistiğe dönülüyor.")
+            tahmin = ortalama_fiyat
+            kaynak = "Piyasa Verisi"
+
+        # --- 2. DURUM ANALİZİ ---
+        # Kullanıcının fiyatı ile Olması Gereken (Tahmin) arasındaki fark
+        fark_yuzdesi = ((gelen_fiyat - tahmin) / tahmin) * 100
+        
+        durum = "Adil Fiyat 🟡"
+        mesaj = f"{marka} markasının {kategori} piyasasına göre fiyatı normal görünüyor."
+
+        if fark_yuzdesi > 20: 
+            durum = "Pahalı 🔴"
+            mesaj = f"Dikkat! {kaynak} analizine göre bu ürün piyasa ortalamasından %{int(fark_yuzdesi)} daha pahalı."
+        elif fark_yuzdesi < -20:
+            durum = "Ucuz (Fırsat) 🟢"
+            mesaj = f"Harika! Bu ürün özellikleri dikkate alındığında piyasa değerinden %{int(abs(fark_yuzdesi))} daha uygun."
+
+        # --- 3. ÖNERİ MOTORU (Daha Ucuz Alternatifler) ---
         oneriler = []
         if not df.empty:
-            # Mantık: Aynı kategori, Fiyatı asıl üründen DÜŞÜK ama çok da ölü olmayan (%40 - %100 arası)
-            alt_sinir = fiyat * 0.4
-            ust_sinir = fiyat * 0.95 # Kendisinden ucuz olsun
-            
+            # Aynı kategoride olup, şu anki fiyattan DAHA UCUZ olanları getir
             alternatifler = df[
                 (df['Kategori'] == kategori) & 
-                (df['Fiyat'] >= alt_sinir) & 
-                (df['Fiyat'] <= ust_sinir)
-            ].sort_values(by='Fiyat', ascending=False).head(3)
-            
+                (df['Fiyat'] < gelen_fiyat) &      # Daha ucuz olsun
+                (df['Fiyat'] > gelen_fiyat * 0.3)  # Ama çok da kalitesiz olmasın (%30'undan ucuz olmasın)
+            ].sort_values(by='Fiyat', ascending=True).head(4) # En ucuz 4 tanesi
+
             for _, row in alternatifler.iterrows():
+                # Resim Kontrolü
                 img = row.get('Resim', '')
-                if pd.isna(img) or str(img) == "nan" or img == "": 
-                    img = "https://via.placeholder.com/150?text=Resim+Yok"
+                if pd.isna(img) or str(img).strip() == "" or "http" not in str(img):
+                    img = "https://via.placeholder.com/60?text=Urun" # Varsayılan Resim
                 
                 oneriler.append({
-                    "ad": row['Model'],
-                    "fiyat": format_money(row['Fiyat']), 
-                    "link": row['Link'],
+                    "ad": str(row['Model']),
+                    "fiyat": format_money(row['Fiyat']),
+                    "link": str(row['Link']),
                     "resim": img
                 })
 
-        return jsonify({
+        # Cevap Hazırla
+        response = jsonify({
             "tahmin": format_money(tahmin),
             "durum": durum,
             "mesaj": mesaj,
             "oneriler": oneriler
         })
+        return _build_cors_actual_response(response)
 
     except Exception as e:
-        print(f"Hata: {e}")
+        print(f"❌ HATA: {e}")
         return jsonify({"error": str(e)}), 500
 
+def _build_cors_preflight_response():
+    response = jsonify({})
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "*")
+    response.headers.add("Access-Control-Allow-Methods", "*")
+    return response
+
+def _build_cors_actual_response(response):
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response
+
 if __name__ == '__main__':
-    print("🚀 Akıllı API (v2) Başladı...")
-    app.run(port=5000)
+    app.run(port=5000, debug=True)
