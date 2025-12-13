@@ -58,6 +58,7 @@
                         </li>
                     </ul>
 
+                    @await Component.InvokeAsync("Currency")
                     <ul class="navbar-nav">
                         @if (User.Identity.IsAuthenticated)
                         {
@@ -80,7 +81,7 @@
                         else
                         {
                             <li class="nav-item">
-                                <a class="btn btn-outline-primary btn-custom me-2" asp-controller="Account" asp-action="Login">Giriş</a>
+                                <a class="btn btn-outline-primary btn-custom me-2 ms-2" asp-controller="Account" asp-action="Login">Giriş</a>
                             </li>
                             <li class="nav-item">
                                 <a class="btn btn-primary btn-custom text-white" asp-controller="Account" asp-action="Register">Kayıt Ol</a>
