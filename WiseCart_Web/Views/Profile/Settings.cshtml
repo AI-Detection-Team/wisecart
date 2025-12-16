@@ -1,0 +1,222 @@
+@model WiseCart_Web.Models.User
+
+@{
+    ViewData["Title"] = "Profil Ayarları";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-gradient text-white">
+                    <h4 class="mb-0">
+                        <i class="fa-solid fa-gear"></i> Profil Ayarları
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Kullanıcı Bilgileri -->
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fa-solid fa-user text-primary"></i> Kullanıcı Bilgileri
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Kullanıcı Adı</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="username" value="@Model.Username" />
+                                <button class="btn btn-outline-primary" onclick="updateUsername()">
+                                    <i class="fa-solid fa-check"></i> Güncelle
+                                </button>
+                            </div>
+                            <small class="text-muted">Kullanıcı adınızı değiştirebilirsiniz.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">E-Posta</label>
+                            <div class="input-group">
+                                <input type="email" class="form-control" id="email" value="@Model.Email" />
+                                <button class="btn btn-outline-primary" onclick="updateEmail()">
+                                    <i class="fa-solid fa-check"></i> Güncelle
+                                </button>
+                            </div>
+                            <small class="text-muted">E-posta adresinizi değiştirebilirsiniz.</small>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Şifre Değiştirme -->
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fa-solid fa-lock text-primary"></i> Şifre Değiştir
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Mevcut Şifre</label>
+                            <input type="password" class="form-control" id="currentPassword" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Yeni Şifre</label>
+                            <input type="password" class="form-control" id="newPassword" />
+                            <small class="text-muted">En az 4 karakter olmalıdır.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Yeni Şifre (Tekrar)</label>
+                            <input type="password" class="form-control" id="confirmPassword" />
+                        </div>
+
+                        <button class="btn btn-primary" onclick="changePassword()">
+                            <i class="fa-solid fa-key"></i> Şifreyi Değiştir
+                        </button>
+                    </div>
+
+                    <hr>
+
+                    <!-- Geri Dön -->
+                    <div class="text-center">
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="fa-solid fa-arrow-left"></i> Profilime Dön
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function updateUsername() {
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                if (typeof showToast !== 'undefined') {
+                    showToast('warning', 'Uyarı', 'Kullanıcı adı boş olamaz.');
+                }
+                return;
+            }
+
+            fetch('/Profile/UpdateProfile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username: username, email: '' })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (typeof showToast !== 'undefined') {
+                        showToast('success', 'Başarılı', data.message);
+                    }
+                } else {
+                    if (typeof showToast !== 'undefined') {
+                        showToast('error', 'Hata', data.message);
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('Hata:', err);
+                if (typeof showToast !== 'undefined') {
+                    showToast('error', 'Hata', 'Bir hata oluştu. Lütfen tekrar deneyin.');
+                }
+            });
+        }
+
+        function updateEmail() {
+            const email = document.getElementById('email').value.trim();
+            if (!email) {
+                if (typeof showToast !== 'undefined') {
+                    showToast('warning', 'Uyarı', 'E-posta boş olamaz.');
+                }
+                return;
+            }
+
+            fetch('/Profile/UpdateProfile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username: '', email: email })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (typeof showToast !== 'undefined') {
+                        showToast('success', 'Başarılı', data.message);
+                    }
+                } else {
+                    if (typeof showToast !== 'undefined') {
+                        showToast('error', 'Hata', data.message);
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('Hata:', err);
+                if (typeof showToast !== 'undefined') {
+                    showToast('error', 'Hata', 'Bir hata oluştu. Lütfen tekrar deneyin.');
+                }
+            });
+        }
+
+        function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                if (typeof showToast !== 'undefined') {
+                    showToast('warning', 'Uyarı', 'Tüm alanları doldurun.');
+                }
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                if (typeof showToast !== 'undefined') {
+                    showToast('error', 'Hata', 'Yeni şifreler eşleşmiyor.');
+                }
+                return;
+            }
+
+            if (newPassword.length < 4) {
+                if (typeof showToast !== 'undefined') {
+                    showToast('error', 'Hata', 'Yeni şifre en az 4 karakter olmalıdır.');
+                }
+                return;
+            }
+
+            fetch('/Profile/ChangePassword', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ currentPassword: currentPassword, newPassword: newPassword })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (typeof showToast !== 'undefined') {
+                        showToast('success', 'Başarılı', data.message);
+                    }
+                    // Şifre alanlarını temizle
+                    document.getElementById('currentPassword').value = '';
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
+                } else {
+                    if (typeof showToast !== 'undefined') {
+                        showToast('error', 'Hata', data.message);
+                    }
+                }
+            })
+            .catch(err => {
+                console.error('Hata:', err);
+                if (typeof showToast !== 'undefined') {
+                    showToast('error', 'Hata', 'Bir hata oluştu. Lütfen tekrar deneyin.');
+                }
+            });
+        }
+    </script>
+}
+
+

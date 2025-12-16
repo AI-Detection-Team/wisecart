@@ -56,6 +56,15 @@
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 hover-card">
                     <div class="position-relative bg-white p-3 text-center" style="height: 200px;">
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <button class="favorite-btn position-absolute top-0 end-0 m-2 btn btn-sm border-0 rounded-circle shadow-sm" 
+                                    data-product-id="@item.Id" 
+                                    style="background: rgba(255, 255, 255, 0.9); z-index: 10; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
+                                    title="Favorilere Ekle">
+                                <i class="fa-regular fa-heart text-danger" style="font-size: 1.2rem;"></i>
+                            </button>
+                        }
                         <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "https://via.placeholder.com/300?text=Urun" : item.ImageUrl)" 
                              class="img-fluid" style="max-height: 100%; object-fit: contain;" 
                              alt="@item.Name"
@@ -64,7 +73,6 @@
                     
                     <div class="card-body">
                         <div class="d-flex justify-content-between mb-2 small">
-                            <span class="fw-bold text-primary">@((item.Brand?.Name ?? "Genel").ToUpper())</span>
                             <span class="text-muted">@item.Category?.Name</span>
                         </div>
                         <h6 class="card-title text-truncate" title="@item.Name">@item.Name</h6>
@@ -101,4 +109,132 @@
 
 <style>
     .hover-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important; transition: 0.3s; }
+    
+    .favorite-btn {
+        transition: all 0.3s ease;
+    }
+    
+    .favorite-btn:hover {
+        background: rgba(255, 255, 255, 1) !important;
+        transform: scale(1.1);
+    }
+    
+    .favorite-btn.active i {
+        font-weight: 900;
+    }
+    
+    .favorite-btn.active .fa-regular {
+        display: none;
+    }
+    
+    .favorite-btn.active .fa-solid {
+        display: inline-block !important;
+    }
+    
+    .favorite-btn .fa-solid {
+        display: none;
+    }
+    
+    /* Ürün kartındaki ilk kelime overlay'ini kaldır */
+    .card .position-relative::before,
+    .card .position-relative::after,
+    .card-img-top::before,
+    .card-img-top::after,
+    .hover-card .position-relative::before,
+    .hover-card .position-relative::after {
+        display: none !important;
+        content: none !important;
+    }
+    
+    /* Ürün adının ilk kelimesini resmin üzerinden kaldır */
+    .card-title::before,
+    .card-title::after {
+        display: none !important;
+        content: none !important;
+    }
+    
+    /* Resim container'ında overlay text'i kaldır */
+    .card .position-relative > *:not(img):not(button) {
+        display: none !important;
+    }
 </style>
+
+@if (User.Identity.IsAuthenticated)
+{
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tüm favori butonlarını kontrol et
+            const favoriteButtons = document.querySelectorAll('.favorite-btn');
+            
+            favoriteButtons.forEach(btn => {
+                const productId = parseInt(btn.getAttribute('data-product-id'));
+                
+                // Mevcut favori durumunu kontrol et
+                fetch(`/api/Favorites/Check/${productId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.isFavorite) {
+                            btn.classList.add('active');
+                            const icon = btn.querySelector('i');
+                            icon.classList.remove('fa-regular');
+                            icon.classList.add('fa-solid');
+                        }
+                    })
+                    .catch(error => console.error('Favori kontrol hatası:', error));
+                
+                // Favori butonuna tıklama
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const icon = btn.querySelector('i');
+                    const isActive = btn.classList.contains('active');
+                    
+                    // Optimistic UI update
+                    if (isActive) {
+                        btn.classList.remove('active');
+                        icon.classList.remove('fa-solid');
+                        icon.classList.add('fa-regular');
+                    } else {
+                        btn.classList.add('active');
+                        icon.classList.remove('fa-regular');
+                        icon.classList.add('fa-solid');
+                    }
+                    
+                    // API çağrısı
+                    fetch('/api/Favorites/Toggle', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(productId)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.message) {
+                            // Toast bildirimi göster (eğer varsa)
+                            if (typeof showToast === 'function') {
+                                showToast(data.isFavorite ? 'success' : 'info', 
+                                         data.isFavorite ? 'Favorilere Eklendi' : 'Favorilerden Çıkarıldı', 
+                                         data.message);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Favori işlemi hatası:', error);
+                        // Hata durumunda geri al
+                        if (isActive) {
+                            btn.classList.add('active');
+                            icon.classList.remove('fa-regular');
+                            icon.classList.add('fa-solid');
+                        } else {
+                            btn.classList.remove('active');
+                            icon.classList.remove('fa-solid');
+                            icon.classList.add('fa-regular');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,129 @@
+@model List<WiseCart_Web.Models.Favorite>
+
+@{
+    ViewData["Title"] = "Favorilerim";
+}
+
+<div class="container mt-5 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">
+            <i class="fa-solid fa-heart text-primary"></i> Favorilerim
+        </h2>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Profilime Dön
+        </a>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="row g-4">
+            @foreach (var favorite in Model)
+            {
+                <div class="col-md-4 col-lg-3">
+                    <div class="card border h-100 hover-shadow">
+                        <a asp-controller="Products" asp-action="Details" asp-route-id="@favorite.ProductId" class="text-decoration-none">
+                            <img src="@(favorite.Product?.ImageUrl ?? "https://via.placeholder.com/300")" 
+                                 class="card-img-top" 
+                                 style="height: 200px; object-fit: cover;"
+                                 alt="@favorite.Product?.Name"
+                                 onerror="this.src='https://via.placeholder.com/300'">
+                        </a>
+                        <div class="card-body">
+                            <h6 class="card-title fw-bold mb-2">
+                                <a asp-controller="Products" asp-action="Details" asp-route-id="@favorite.ProductId" 
+                                   class="text-dark text-decoration-none">
+                                    @(favorite.Product?.Name?.Length > 50 ? favorite.Product.Name.Substring(0, 50) + "..." : favorite.Product?.Name)
+                                </a>
+                            </h6>
+                            <p class="text-success fw-bold mb-2">
+                                @favorite.Product?.CurrentPrice?.ToString("N0") TL
+                            </p>
+                            <div class="d-flex gap-1 mb-3">
+                                <span class="badge bg-info bg-opacity-10 text-info" style="font-size: 0.75rem;">
+                                    @favorite.Product?.Brand?.Name
+                                </span>
+                                <span class="badge bg-secondary bg-opacity-10 text-secondary" style="font-size: 0.75rem;">
+                                    @favorite.Product?.Category?.Name
+                                </span>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <a asp-controller="Products" asp-action="Details" asp-route-id="@favorite.ProductId" 
+                                   class="btn btn-sm btn-primary">
+                                    <i class="fa-solid fa-eye"></i> Detayları Gör
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger remove-favorite-btn" 
+                                        data-product-id="@favorite.ProductId">
+                                    <i class="fa-solid fa-heart-crack"></i> Favoriden Çıkar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="fa-solid fa-heart text-muted" style="font-size: 80px; opacity: 0.3;"></i>
+            <h4 class="text-muted mt-3">Henüz favori ürününüz yok</h4>
+            <p class="text-muted">Beğendiğiniz ürünleri favorilerinize ekleyerek daha sonra kolayca bulabilirsiniz.</p>
+            <a asp-controller="Products" asp-action="Index" class="btn btn-primary mt-3">
+                <i class="fa-solid fa-magnifying-glass"></i> Ürünleri Keşfet
+            </a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll('.remove-favorite-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const productId = this.getAttribute('data-product-id');
+                    const card = this.closest('.col-md-4, .col-lg-3');
+                    
+                    fetch('/api/Favorites/Toggle', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(productId)
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.isFavorite) {
+                            if (typeof showToast !== 'undefined') {
+                                showToast('info', 'Favorilerden Çıkarıldı', 'Ürün favorilerinizden çıkarıldı.');
+                            }
+                            card.style.transition = 'opacity 0.3s';
+                            card.style.opacity = '0';
+                            setTimeout(() => {
+                                card.remove();
+                                if (document.querySelectorAll('.col-md-4, .col-lg-3').length === 0) {
+                                    location.reload();
+                                }
+                            }, 300);
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Hata:', err);
+                        if (typeof showToast !== 'undefined') {
+                            showToast('error', 'İşlem Başarısız', 'Bir hata oluştu. Lütfen tekrar deneyin.');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+    
+    <style>
+        .hover-shadow:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+            transition: box-shadow 0.3s;
+            transform: translateY(-2px);
+        }
+    </style>
+}
+
+

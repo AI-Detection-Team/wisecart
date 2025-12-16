@@ -1,0 +1,331 @@
+/* Mor Tema Renkleri */
+:root {
+    --mor-ana: #6f42c1;
+    --mor-koyu: #5a32a3;
+    --mor-acik: #8b6fc7;
+    --mor-pembe: #9d4edd;
+    --mor-gradient-start: #667eea;
+    --mor-gradient-end: #764ba2;
+}
+
+/* Primary renkleri mor yap - Profil sayfası hariç */
+.btn-primary:not(.profile-page *),
+.bg-primary:not(.profile-page *),
+.text-primary:not(.profile-page *),
+.border-primary:not(.profile-page *) {
+    background-color: var(--mor-ana) !important;
+    border-color: var(--mor-ana) !important;
+    color: white !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--mor-koyu) !important;
+    border-color: var(--mor-koyu) !important;
+}
+
+.btn-outline-primary {
+    color: var(--mor-ana) !important;
+    border-color: var(--mor-ana) !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--mor-ana) !important;
+    border-color: var(--mor-ana) !important;
+    color: white !important;
+}
+
+.text-primary:not(.profile-page *) {
+    color: var(--mor-ana) !important;
+}
+
+.bg-primary:not(.profile-page *) {
+    background-color: var(--mor-ana) !important;
+}
+
+.bg-primary.bg-opacity-10:not(.profile-page *) {
+    background-color: rgba(111, 66, 193, 0.1) !important;
+}
+
+.text-primary {
+    color: var(--mor-ana) !important;
+}
+
+/* Navbar brand */
+.navbar-brand.text-primary {
+    color: var(--mor-ana) !important;
+    background: none !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Nav link hover */
+.nav-link:hover {
+    color: var(--mor-ana) !important;
+}
+
+/* Navbar profil dropdown - mor arka planı kaldır */
+.navbar-nav .nav-item.dropdown .nav-link,
+.navbar-nav .nav-item.dropdown .nav-link:hover,
+.navbar-nav .nav-item.dropdown .nav-link:focus,
+.navbar-nav .nav-item.dropdown .nav-link:active {
+    background: none !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+.navbar-nav .nav-item.dropdown .nav-link.text-primary {
+    background: none !important;
+    background-color: transparent !important;
+}
+
+/* Dropdown active */
+.dropdown-item:active {
+    background-color: var(--mor-ana) !important;
+}
+
+/* Badge primary */
+.badge.bg-primary {
+    background-color: var(--mor-ana) !important;
+}
+
+/* Gradient backgrounds - Profil sayfası hariç */
+.bg-gradient:not(.profile-page *):not(.profile-page-container *) {
+    background: linear-gradient(135deg, var(--mor-gradient-start) 0%, var(--mor-gradient-end) 100%) !important;
+}
+
+/* Profil sayfası container için özel override - TÜM MOR BANTLARI KALDIR */
+.profile-page-container .bg-gradient,
+.profile-page-container .bg-primary,
+.profile-page-container [class*="bg-gradient"],
+.profile-page-container [class*="bg-primary"],
+.profile-page-container .card-header.bg-gradient,
+.profile-page-container .card-header.bg-primary,
+.profile-page-container .card-header[class*="bg-gradient"],
+.profile-page-container .card-header[class*="bg-primary"] {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+}
+
+/* Card header'ları özellikle hedefle */
+.profile-page-container .card-header {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    background-image: none !important;
+}
+
+/* Tüm mor renkleri kaldır */
+.profile-page-container [style*="#6f42c1"],
+.profile-page-container [style*="var(--mor"] {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+}
+
+/* Link colors */
+a.text-primary {
+    color: var(--mor-ana) !important;
+}
+
+a.text-primary:hover {
+    color: var(--mor-koyu) !important;
+}
+
+/* Focus states */
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--mor-ana) !important;
+    box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.25) !important;
+}
+
+/* Active states */
+.nav-link.active {
+    color: var(--mor-ana) !important;
+}
+
+/* Pagination */
+.page-link {
+    color: var(--mor-ana) !important;
+}
+
+.page-link:hover {
+    color: var(--mor-koyu) !important;
+}
+
+.page-item.active .page-link {
+    background-color: var(--mor-ana) !important;
+    border-color: var(--mor-ana) !important;
+}
+
+/* Profil sayfası - Hesap Özeti kartları için özel stiller */
+.profile-summary-card {
+    background-color: #ffffff !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+.profile-summary-card h5,
+.profile-summary-card p {
+    color: #212529 !important;
+}
+
+.profile-summary-card .text-danger {
+    color: #dc3545 !important;
+}
+
+.profile-summary-card .text-success {
+    color: #198754 !important;
+}
+
+/* Profil sayfası için ÇOK AGRESİF override - TÜM MOR KARTLARI VE BANTLARI KALDIR */
+
+/* Önce tüm elementleri transparent yap */
+.profile-page * {
+    background-color: transparent !important;
+    background: none !important;
+}
+
+/* Sonra card'ları beyaz yap */
+.profile-page .card,
+.profile-page .card-body,
+.profile-page .card-header,
+.profile-page .summary-card-item {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #212529 !important;
+}
+
+/* TÜM MOR ARKA PLANLARI KALDIR - Her türlü mor rengi yakala */
+.profile-page .bg-primary,
+.profile-page .bg-gradient,
+.profile-page [class*="bg-primary"],
+.profile-page [class*="bg-gradient"],
+.profile-page [class*="purple"],
+.profile-page div[style*="background"],
+.profile-page div[style*="background-color"],
+.profile-page div[style*="#6f42c1"],
+.profile-page div[style*="purple"],
+.profile-page div[style*="var(--mor"],
+.profile-page span[style*="#6f42c1"],
+.profile-page span[style*="purple"],
+.profile-page [style*="background-color: #6f42c1"],
+.profile-page [style*="background: #6f42c1"],
+.profile-page [style*="background-color: var(--mor"],
+.profile-page [style*="background: var(--mor"] {
+    background-color: transparent !important;
+    background: none !important;
+}
+
+.profile-page .summary-card-item {
+    border: 1px solid #dee2e6 !important;
+    border-radius: 8px !important;
+    background-color: #ffffff !important;
+}
+
+/* Tüm yazıları siyah yap */
+.profile-page h1,
+.profile-page h2,
+.profile-page h3,
+.profile-page h4,
+.profile-page h5,
+.profile-page h6,
+.profile-page p,
+.profile-page span:not(.badge),
+.profile-page .text-dark,
+.profile-page .text-muted,
+.profile-page .summary-card-item * {
+    color: #212529 !important;
+}
+
+/* İkonları gri yap - mor değil */
+.profile-page .summary-card-item i,
+.profile-page .summary-card-item i::before,
+.profile-page i {
+    color: #6c757d !important;
+    background-color: transparent !important;
+    background: none !important;
+}
+
+/* Profil sayfası container için ikon arka planlarını kaldır */
+.profile-page-container i,
+.profile-page-container i::before,
+.profile-page-container i::after,
+.profile-page-container [class*="fa-"]::before,
+.profile-page-container [class*="fa-"]::after,
+.profile-page-container .fa-solid::before,
+.profile-page-container .fa-solid::after {
+    background: none !important;
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+/* İkon container'ları için mor arka plan kaldır */
+.profile-page-container div[class*="icon"],
+.profile-page-container span[class*="icon"],
+.profile-page-container .mb-3 i,
+.profile-page-container .text-center i {
+    background: none !important;
+    background-color: transparent !important;
+}
+
+/* TÜM MOR ARKA PLANLARI KALDIR - ÇOK AGRESİF */
+.profile-page-container * {
+    background-image: none !important;
+}
+
+.profile-page-container [style*="background"],
+.profile-page-container [style*="background-color"],
+.profile-page-container [style*="#6f42c1"],
+.profile-page-container [style*="purple"],
+.profile-page-container [style*="var(--mor"] {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+/* İkonlar için özel - her türlü mor arka planı kaldır */
+.profile-page-container i,
+.profile-page-container .fa-solid,
+.profile-page-container .fa-regular,
+.profile-page-container [class^="fa-"],
+.profile-page-container [class*=" fa-"] {
+    background: none !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+/* İkon parent container'ları */
+.profile-page-container div:has(> i),
+.profile-page-container span:has(> i),
+.profile-page-container .mb-3:has(> i),
+.profile-page-container .text-center:has(> i) {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+.profile-page .summary-card-item .text-danger,
+.profile-page .summary-card-item .text-success {
+    color: #6c757d !important;
+}
+
+/* Profil avatar placeholder - mor arka planı kaldır */
+.profile-avatar-placeholder,
+.profile-avatar-placeholder *,
+.profile-avatar-placeholder::before,
+.profile-avatar-placeholder::after {
+    background-color: transparent !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Butonlar - mor arka planı kaldır */
+.profile-page .btn-primary,
+.profile-page .btn[class*="primary"],
+.profile-page .btn[style*="background"] {
+    background-color: transparent !important;
+    background: none !important;
+    border-color: #6c757d !important;
+    color: #212529 !important;
+}

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,6 +19,8 @@ public partial class WiseCartDbContext : DbContext
 
     public virtual DbSet<Category> Categories { get; set; }
 
+    public virtual DbSet<Favorite> Favorites { get; set; }
+
     public virtual DbSet<PriceHistory> PriceHistories { get; set; }
 
     public virtual DbSet<Product> Products { get; set; }
@@ -30,8 +32,10 @@ public partial class WiseCartDbContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=WiseCartDB;Trusted_Connection=True;TrustServerCertificate=True;");
+    {
+        // Connection string appsettings.json'dan okunur, burada fallback yok
+        // Sadece uyarıyı kaldırdık
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -110,6 +114,27 @@ public partial class WiseCartDbContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
             entity.Property(e => e.Message).IsUnicode(false);
+        });
+
+        modelBuilder.Entity<Favorite>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Favorit__3214EC07");
+
+            entity.ToTable("Favorites");
+
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK__Favorites__User");
+
+            entity.HasOne(d => d.Product).WithMany()
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK__Favorites__Product");
+
+            entity.HasIndex(e => new { e.UserId, e.ProductId }).IsUnique();
         });
 
         modelBuilder.Entity<User>(entity =>

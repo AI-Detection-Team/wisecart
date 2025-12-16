@@ -74,6 +74,17 @@ namespace WiseCart_Web.Controllers
 
             if (product == null) return NotFound();
 
+            // Benzer ürünleri çek (aynı kategoriden, farklı ürün, rastgele 4 tane)
+            var similarProducts = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Where(p => p.CategoryId == product.CategoryId && p.Id != product.Id)
+                .OrderBy(x => Guid.NewGuid()) // Rastgele sıralama
+                .Take(4)
+                .ToListAsync();
+
+            ViewBag.SimilarProducts = similarProducts;
+
             // --- SOA ENTEGRASYONU: NODE.JS LOGLAMA ---
             // Kullanıcı bu ürüne baktığında Node.js servisine haber veriyoruz.
             // Bu işlem "Fire and Forget" (Ateşle ve Unut) mantığıyla yapılır, siteyi yavaşlatmaz.

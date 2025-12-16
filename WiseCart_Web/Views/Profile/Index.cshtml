@@ -1,0 +1,406 @@
+@model WiseCart_Web.Models.User
+
+@{
+    ViewData["Title"] = "Profilim";
+}
+
+<style>
+    /* Modern Profil Sayfası Tasarımı */
+    .profile-page-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 3rem 0;
+    }
+    
+    /* Profil Kartı - Çok Daha Belirgin */
+    .profile-card-modern {
+        background: #ffffff !important;
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+        border: 3px solid rgba(255, 255, 255, 0.3) !important;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    
+    .profile-card-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        pointer-events: none;
+        border-radius: 24px;
+    }
+    
+    .profile-card-modern:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2) !important;
+        border-color: rgba(255, 255, 255, 0.5) !important;
+    }
+    
+    /* Avatar Container - Daha Belirgin */
+    .avatar-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5), 0 0 0 4px rgba(255, 255, 255, 0.3);
+        border: 4px solid rgba(255, 255, 255, 0.5);
+        position: relative;
+    }
+    
+    .avatar-container i {
+        font-size: 60px;
+        color: white !important;
+    }
+    
+    /* Kullanıcı Adı - Daha Belirgin */
+    .profile-card-modern h3 {
+        color: #1a202c;
+        font-weight: 800;
+        font-size: 1.75rem;
+        margin-bottom: 0.75rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Email */
+    .profile-card-modern .email-text {
+        color: #2d3748 !important;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+    
+    /* Role Badge - Daha Belirgin */
+    .role-badge-modern {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        padding: 0.75rem 1.5rem;
+        border-radius: 30px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        display: inline-block;
+        margin: 1.5rem 0;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.3);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .role-badge-modern,
+    .role-badge-modern *,
+    .role-badge-modern i,
+    .role-badge-modern span,
+    .role-badge-modern::before,
+    .role-badge-modern::after {
+        color: white !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Tüm iç elementler için beyaz renk */
+    .role-badge-modern * {
+        color: white !important;
+    }
+    
+    /* Butonlar - Daha Belirgin ve Modern */
+    .btn-modern-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: 3px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 16px;
+        padding: 1rem 1.5rem;
+        font-weight: 700;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4), 0 0 0 0 rgba(102, 126, 234, 0.2);
+        width: 100%;
+        margin-bottom: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-modern-primary * {
+        color: white !important;
+        z-index: 10;
+        position: relative;
+    }
+    
+    .btn-modern-primary i {
+        color: white !important;
+        z-index: 10;
+        position: relative;
+    }
+    
+    .btn-modern-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+        transition: left 0.3s ease;
+        z-index: 1;
+    }
+    
+    .btn-modern-primary:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.5), 0 0 0 4px rgba(102, 126, 234, 0.2);
+        border-color: rgba(255, 255, 255, 0.5) !important;
+        color: white !important;
+    }
+    
+    .btn-modern-primary:hover * {
+        color: white !important;
+    }
+    
+    .btn-modern-primary:hover::before {
+        left: 100%;
+    }
+    
+    .btn-modern-secondary {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+        color: white !important;
+        border: 3px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 16px;
+        padding: 1rem 1.5rem;
+        font-weight: 700;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(245, 87, 108, 0.4), 0 0 0 0 rgba(245, 87, 108, 0.2);
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-modern-secondary * {
+        color: white !important;
+        z-index: 10;
+        position: relative;
+    }
+    
+    .btn-modern-secondary i {
+        color: white !important;
+        z-index: 10;
+        position: relative;
+    }
+    
+    .btn-modern-secondary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+        transition: left 0.3s ease;
+        z-index: 1;
+    }
+    
+    .btn-modern-secondary:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 12px 30px rgba(245, 87, 108, 0.5), 0 0 0 4px rgba(245, 87, 108, 0.2);
+        border-color: rgba(255, 255, 255, 0.5) !important;
+        color: white !important;
+    }
+    
+    .btn-modern-secondary:hover * {
+        color: white !important;
+    }
+    
+    .btn-modern-secondary:hover::before {
+        left: 100%;
+    }
+    
+    /* Hızlı İşlemler Kartı - Çok Daha Belirgin */
+    .quick-actions-card {
+        background: #ffffff !important;
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+        border: 3px solid rgba(255, 255, 255, 0.3) !important;
+        overflow: hidden;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-actions-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+        pointer-events: none;
+        border-radius: 24px;
+    }
+    
+    .quick-actions-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.2) !important;
+        border-color: rgba(255, 255, 255, 0.5) !important;
+    }
+    
+    .quick-actions-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border: none;
+    }
+    
+    .quick-actions-header h4 {
+        color: white !important;
+        margin: 0;
+        font-weight: 700;
+    }
+    
+    .quick-actions-header i {
+        color: white !important;
+        margin-right: 0.5rem;
+    }
+    
+    /* Hızlı İşlem Butonları - Daha Belirgin */
+    .action-btn {
+        background: #ffffff !important;
+        border: 3px solid #e2e8f0 !important;
+        border-radius: 16px;
+        padding: 1.25rem 1.75rem;
+        color: #2d3748;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-align: left;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .action-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        transition: left 0.3s ease;
+        z-index: 0;
+    }
+    
+    .action-btn > * {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .action-btn:hover {
+        color: white !important;
+        border-color: transparent !important;
+        transform: translateX(8px) scale(1.02);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .action-btn:hover::before {
+        left: 0;
+    }
+    
+    .action-btn:hover i {
+        color: white !important;
+    }
+    
+    .action-btn i {
+        color: #667eea;
+        margin-right: 0.75rem;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+    }
+    
+    /* Üyelik Tarihi */
+    .membership-date {
+        color: #2d3748 !important;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+        font-weight: 500;
+    }
+    
+    .membership-date i {
+        color: #667eea;
+        margin-right: 0.5rem;
+    }
+    
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .profile-page-container {
+            padding: 1rem 0;
+        }
+        
+        .avatar-container {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .avatar-container i {
+            font-size: 50px;
+        }
+    }
+</style>
+
+<div class="profile-page-container">
+    <div class="container">
+        <div class="row">
+            <!-- Sol Taraf - Kullanıcı Bilgileri -->
+            <div class="col-md-4 mb-4">
+                <div class="card profile-card-modern">
+                    <div class="card-body text-center p-5">
+                        <div class="avatar-container">
+                            <i class="fa-solid fa-user-circle"></i>
+                        </div>
+                        <h3 class="fw-bold mb-2">@Model.Username</h3>
+                        <p class="email-text mb-3">@Model.Email</p>
+                        <hr class="my-4" style="border: 2px solid #e2e8f0; opacity: 0.5;">
+                        <p class="membership-date">
+                            <i class="fa-solid fa-calendar"></i> Üyelik Tarihi: @Model.CreatedAt?.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("tr-TR"))
+                        </p>
+                        
+                        <!-- Profil Ayarları Butonu -->
+                        <a asp-action="Settings" class="btn btn-modern-primary">
+                            <i class="fa-solid fa-gear"></i> Profil Ayarları
+                        </a>
+                        
+                        <!-- Favoriler Butonu -->
+                        <a asp-action="Favorites" class="btn btn-modern-secondary">
+                            <i class="fa-solid fa-heart"></i> Favorilerim
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sağ Taraf - Hızlı İşlemler -->
+            <div class="col-md-8">
+                <div class="card quick-actions-card">
+                    <div class="card-header quick-actions-header">
+                        <h4 class="mb-0">
+                            <i class="fa-solid fa-bolt"></i> Hızlı İşlemler
+                        </h4>
+                    </div>
+                    <div class="card-body p-5">
+                        <div class="d-grid gap-3">
+                            <a asp-action="Favorites" class="action-btn">
+                                <i class="fa-solid fa-heart"></i> Favorilerimi Görüntüle
+                            </a>
+                            <a asp-action="Settings" class="action-btn">
+                                <i class="fa-solid fa-gear"></i> Profil Ayarlarını Düzenle
+                            </a>
+                            <a asp-controller="Products" asp-action="Index" class="action-btn">
+                                <i class="fa-solid fa-magnifying-glass"></i> Ürünleri Keşfet
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

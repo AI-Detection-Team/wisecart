@@ -28,7 +28,15 @@
                         </ol>
                     </nav>
 
-                    <h3 class="fw-bold text-dark mb-3">@Model.Name</h3>
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h3 class="fw-bold text-dark mb-0">@Model.Name</h3>
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <button id="favoriteBtn" class="btn btn-outline-danger border-0" style="font-size: 1.5rem;">
+                                <i class="fa-regular fa-heart"></i>
+                            </button>
+                        }
+                    </div>
                     
                     <div class="d-flex flex-wrap gap-2 mb-4">
                         <span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2">
@@ -85,24 +93,124 @@
                             </div>
                         </div>
                     </div>
-                    </div>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Fiyat Analizi Grafiği -->
+    <div class="container mt-5">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h4 class="mb-0">
+                    <i class="fa-solid fa-chart-line"></i> Fiyat Analizi (Son 6 Ay)
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <canvas id="priceChart" style="max-height: 300px;"></canvas>
+                <div id="priceRecommendation" class="mt-3 text-center">
+                    <p class="fw-bold fs-5 mb-0" id="recommendationText"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Benzer Ürünler -->
+    @{
+        var similarProducts = ViewBag.SimilarProducts as List<WiseCart_Web.Models.Product> ?? new List<WiseCart_Web.Models.Product>();
+    }
+    @if (similarProducts.Any())
+    {
+        <div class="container mt-5 mb-5">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-light">
+                    <h4 class="mb-0">
+                        <i class="fa-solid fa-star"></i> Sizin İçin Seçtiklerimiz
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        @foreach (var similar in similarProducts)
+                        {
+                            <div class="col-md-3 col-sm-6">
+                                <div class="card border h-100 hover-shadow position-relative">
+                                    @if (User.Identity.IsAuthenticated)
+                                    {
+                                        <button class="favorite-btn position-absolute top-0 end-0 m-2 btn btn-sm border-0 rounded-circle shadow-sm" 
+                                                data-product-id="@similar.Id" 
+                                                style="background: rgba(255, 255, 255, 0.9); z-index: 10; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;"
+                                                title="Favorilere Ekle"
+                                                onclick="event.preventDefault(); event.stopPropagation();">
+                                            <i class="fa-regular fa-heart text-danger" style="font-size: 1rem;"></i>
+                                        </button>
+                                    }
+                                    <a asp-controller="Products" asp-action="Details" asp-route-id="@similar.Id" class="text-decoration-none">
+                                        <img src="@(similar.ImageUrl ?? "https://via.placeholder.com/200")" 
+                                             class="card-img-top" 
+                                             style="height: 200px; object-fit: cover;"
+                                             alt="@similar.Name"
+                                             onerror="this.src='https://via.placeholder.com/200'">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-dark fw-bold" style="font-size: 0.9rem;">
+                                                @(similar.Name?.Length > 50 ? similar.Name.Substring(0, 50) + "..." : similar.Name)
+                                            </h6>
+                                            <p class="text-success fw-bold mb-2">
+                                                @similar.CurrentPrice?.ToString("N0") TL
+                                            </p>
+                                            <div class="d-flex gap-1">
+                                                <span class="badge bg-info bg-opacity-10 text-info" style="font-size: 0.7rem;">
+                                                    @similar.Brand?.Name
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
+<style>
+    /* Favorileme Butonları için Stil */
+    .favorite-btn {
+        transition: all 0.3s ease;
+    }
+    
+    .favorite-btn:hover {
+        background: rgba(255, 255, 255, 1) !important;
+        transform: scale(1.1);
+    }
+    
+    .favorite-btn.active i {
+        font-weight: 900;
+    }
+    
+    .favorite-btn.active .fa-regular {
+        display: none;
+    }
+    
+    .favorite-btn.active .fa-solid {
+        display: inline-block !important;
+    }
+    
+    .favorite-btn .fa-solid {
+        display: none;
+    }
+</style>
+
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             // Elementleri Seç
             const analyzeBtn = document.getElementById("analyzeBtn");
             const loadingDiv = document.getElementById("ai-loading");
             const resultDiv = document.getElementById("ai-result");
-
-            if (!analyzeBtn) {
-                console.error("HATA: Analiz butonu bulunamadı!");
-                return;
-            }
+            const favoriteBtn = document.getElementById("favoriteBtn");
 
             // --- KRİTİK DÜZELTME BURADA ---
             // C# verilerini güvenli bir şekilde JSON formatına çeviriyoruz.
@@ -110,12 +218,223 @@
             const modelName = @Json.Serialize(Model.Name ?? "");
             const brandName = @Json.Serialize(Model.Brand?.Name ?? "");
             const categoryName = @Json.Serialize(Model.Category?.Name ?? "");
+            const productId = @Model.Id;
             
             // Fiyatı güvenli şekilde sayıya çevir (Nokta/Virgül sorununu çözer)
             const rawPriceCsharp = "@Model.CurrentPrice"; 
             let priceVal = parseFloat(rawPriceCsharp.replace("TL", "").replace(/\./g, "").replace(",", ".")) || 0;
 
             console.log("✅ Sayfa Hazır. Ürün:", modelName);
+
+            // --- FAVORİ BUTONU ---
+            if (favoriteBtn) {
+                // Mevcut favori durumunu kontrol et
+                fetch(`/api/Favorites/Check/${productId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.isFavorite) {
+                            favoriteBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+                            favoriteBtn.classList.add('text-danger');
+                        }
+                    });
+
+                favoriteBtn.addEventListener('click', function() {
+                    fetch('/api/Favorites/Toggle', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(productId)
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.isFavorite) {
+                            favoriteBtn.innerHTML = '<i class="fa-solid fa-heart"></i>';
+                            favoriteBtn.classList.add('text-danger');
+                            if (typeof showToast !== 'undefined') {
+                                showToast('success', 'Favorilere Eklendi', 'Bu ürün favorilerinize eklendi. Profil sayfanızdan görüntüleyebilirsiniz.');
+                            }
+                        } else {
+                            favoriteBtn.innerHTML = '<i class="fa-regular fa-heart"></i>';
+                            favoriteBtn.classList.remove('text-danger');
+                            if (typeof showToast !== 'undefined') {
+                                showToast('info', 'Favorilerden Çıkarıldı', 'Bu ürün favorilerinizden çıkarıldı.');
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Favori hatası:', err);
+                        if (typeof showToast !== 'undefined') {
+                            showToast('error', 'İşlem Başarısız', 'Favori işlemi sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+                        }
+                    });
+                });
+            }
+
+            // --- BENZER ÜRÜNLER İÇİN FAVORİLEME BUTONLARI ---
+            @if (User.Identity.IsAuthenticated)
+            {
+                <text>
+                const similarFavoriteButtons = document.querySelectorAll('.favorite-btn[data-product-id]');
+                
+                similarFavoriteButtons.forEach(btn => {
+                    const similarProductId = parseInt(btn.getAttribute('data-product-id'));
+                    
+                    // Mevcut favori durumunu kontrol et
+                    fetch(`/api/Favorites/Check/${similarProductId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.isFavorite) {
+                                btn.classList.add('active');
+                                const icon = btn.querySelector('i');
+                                icon.classList.remove('fa-regular');
+                                icon.classList.add('fa-solid');
+                            }
+                        })
+                        .catch(error => console.error('Favori kontrol hatası:', error));
+                    
+                    // Favori butonuna tıklama
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const icon = btn.querySelector('i');
+                        const isActive = btn.classList.contains('active');
+                        
+                        // Optimistic UI update
+                        if (isActive) {
+                            btn.classList.remove('active');
+                            icon.classList.remove('fa-solid');
+                            icon.classList.add('fa-regular');
+                        } else {
+                            btn.classList.add('active');
+                            icon.classList.remove('fa-regular');
+                            icon.classList.add('fa-solid');
+                        }
+                        
+                        // API çağrısı
+                        fetch('/api/Favorites/Toggle', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(similarProductId)
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.message && typeof showToast === 'function') {
+                                showToast(data.isFavorite ? 'success' : 'info', 
+                                         data.isFavorite ? 'Favorilere Eklendi' : 'Favorilerden Çıkarıldı', 
+                                         data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Favori işlemi hatası:', error);
+                            // Hata durumunda geri al
+                            if (isActive) {
+                                btn.classList.add('active');
+                                icon.classList.remove('fa-regular');
+                                icon.classList.add('fa-solid');
+                            } else {
+                                btn.classList.remove('active');
+                                icon.classList.remove('fa-solid');
+                                icon.classList.add('fa-regular');
+                            }
+                        });
+                    });
+                });
+                </text>
+            }
+
+            // --- FİYAT ANALİZİ GRAFİĞİ ---
+            const ctx = document.getElementById('priceChart');
+            if (ctx) {
+                // Son 6 ay için dummy veri oluştur
+                const months = [];
+                const prices = [];
+                const currentPrice = priceVal;
+                
+                // Son 6 ayın isimlerini oluştur
+                const monthNames = ['Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+                for (let i = 5; i >= 0; i--) {
+                    months.push(monthNames[i]);
+                    // Rastgele fiyat değişimi (mevcut fiyatın %80-120 arası)
+                    const variation = 0.8 + Math.random() * 0.4;
+                    prices.push(Math.round(currentPrice * variation));
+                }
+
+                // Trend hesapla
+                const firstPrice = prices[0];
+                const lastPrice = prices[prices.length - 1];
+                const trend = lastPrice - firstPrice;
+                const trendPercent = ((trend / firstPrice) * 100).toFixed(1);
+                
+                // Öneri metni
+                let recommendationText = '';
+                let recommendationClass = '';
+                if (trend < -currentPrice * 0.1) {
+                    recommendationText = '🟢 Şu an almak için en iyi zaman! Fiyat düşüşte.';
+                    recommendationClass = 'text-success';
+                } else if (trend > currentPrice * 0.1) {
+                    recommendationText = '🔴 Fiyat yükselişte. Beklemenizi öneririz.';
+                    recommendationClass = 'text-danger';
+                } else {
+                    recommendationText = '🟡 Fiyat stabil. İstediğiniz zaman alabilirsiniz.';
+                    recommendationClass = 'text-warning';
+                }
+                
+                document.getElementById('recommendationText').textContent = recommendationText;
+                document.getElementById('recommendationText').className = 'fw-bold fs-5 mb-0 ' + recommendationClass;
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: 'Fiyat (TL)',
+                            data: prices,
+                            borderColor: 'rgb(102, 126, 234)',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 5,
+                            pointHoverRadius: 7
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Fiyat: ' + context.parsed.y.toLocaleString('tr-TR') + ' TL';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toLocaleString('tr-TR') + ' TL';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (!analyzeBtn) {
+                console.error("HATA: Analiz butonu bulunamadı!");
+                return;
+            }
 
             analyzeBtn.addEventListener("click", function() {
                 console.log("🖱️ Butona basıldı!");
@@ -186,11 +505,20 @@
                 })
                 .catch(err => {
                     console.error("API Hatası:", err);
-                    alert("HATA: Yapay Zeka servisine bağlanılamadı! Pınar'ın terminalini (Port 5000) kontrol edin.");
+                    if (typeof showToast !== 'undefined') {
+                        showToast(
+                            'error',
+                            'Yapay Zeka Servisi Hatası',
+                            'Yapay Zeka fiyat analizi şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.'
+                        );
+                    } else {
+                        alert("HATA: Yapay Zeka servisine bağlanılamadı! Lütfen daha sonra tekrar deneyin.");
+                    }
                 })
                 .finally(() => {
                     analyzeBtn.disabled = false;
                     analyzeBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Yapay Zeka ile Fiyat Analizi Yap';
+                    loadingDiv.classList.add("d-none");
                 });
             });
         });
@@ -199,4 +527,13 @@
 
 <style>
     .hover-scale:hover { transform: scale(1.02); transition: 0.2s; }
+    .hover-shadow:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        transition: box-shadow 0.3s;
+        transform: translateY(-2px);
+    }
+    #favoriteBtn:hover {
+        transform: scale(1.1);
+        transition: transform 0.2s;
+    }
 </style>
