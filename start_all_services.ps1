@@ -11,8 +11,8 @@ Write-Host ""
 $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $scriptPath
 
-# 1. Python Flask API Server (Port 5000)
-Write-Host "[1/5] Python Flask API Server başlatılıyor (Port 5000)..." -ForegroundColor Yellow
+# 1. Python Flask API Server (Port 5001 - macOS AirPlay port 5000'i kullandığı için)
+Write-Host "[1/5] Python Flask API Server başlatılıyor (Port 5001)..." -ForegroundColor Yellow
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$scriptPath\AI_Engine'; python api_server.py" -WindowStyle Normal
 Start-Sleep -Seconds 3
 Write-Host "    ✓ Python API başlatıldı" -ForegroundColor Green
@@ -51,7 +51,7 @@ Write-Host "  Tüm Servisler Başlatıldı!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Servisler:" -ForegroundColor White
-Write-Host "  - Python API:        http://localhost:5000" -ForegroundColor Cyan
+Write-Host "  - Python API:        http://localhost:5001" -ForegroundColor Cyan
 Write-Host "  - SOAP Server:       http://localhost:8000" -ForegroundColor Cyan
 Write-Host "  - gRPC Server:       localhost:50051" -ForegroundColor Cyan
 Write-Host "  - Node.js Log:       http://localhost:4000" -ForegroundColor Cyan

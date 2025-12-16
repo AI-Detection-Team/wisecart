@@ -11,8 +11,8 @@ echo.
 REM Proje dizinine git
 cd /d "%~dp0"
 
-REM 1. Python Flask API Server (Port 5000)
-echo [1/5] Python Flask API Server başlatılıyor (Port 5000)...
+REM 1. Python Flask API Server (Port 5001 - macOS AirPlay port 5000'i kullandığı için)
+echo [1/5] Python Flask API Server başlatılıyor (Port 5001)...
 start "WiseCart - Python API" cmd /k "cd AI_Engine && python api_server.py"
 timeout /t 3 /nobreak >nul
 echo    ✓ Python API başlatıldı
@@ -51,7 +51,7 @@ echo   Tüm Servisler Başlatıldı!
 echo ========================================
 echo.
 echo Servisler:
-echo   - Python API:        http://localhost:5000
+echo   - Python API:        http://localhost:5001
 echo   - SOAP Server:       http://localhost:8000
 echo   - gRPC Server:       localhost:50051
 echo   - Node.js Log:       http://localhost:4000

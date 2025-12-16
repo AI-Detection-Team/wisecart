@@ -142,16 +142,27 @@ def predict():
                     "resim": img
                 })
 
-        return jsonify({
+        response = jsonify({
             "tahmin": format_money(tahmin),
             "durum": durum,
             "mesaj": mesaj,
             "oneriler": oneriler
         })
+        # CORS header'larını ekle
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "*")
+        response.headers.add("Access-Control-Allow-Methods", "*")
+        return response
 
     except Exception as e:
         print(f"❌ HATA: {e}")
-        return jsonify({"error": str(e)}), 500
+        import traceback
+        traceback.print_exc()
+        response = jsonify({"error": str(e)})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "*")
+        response.headers.add("Access-Control-Allow-Methods", "*")
+        return response, 500
 
 def _build_cors_preflight_response():
     response = jsonify({})
@@ -161,4 +172,4 @@ def _build_cors_preflight_response():
     return response
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    app.run(host='127.0.0.1', port=5001, debug=True)

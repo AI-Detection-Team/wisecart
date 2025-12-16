@@ -16,7 +16,7 @@ cd /Users/pinareray/Desktop/wisecart/AI_Engine
 pkill -f "python3 api_server.py" 2>/dev/null
 python3 api_server.py > /tmp/wisecart_api.log 2>&1 &
 sleep 3
-echo "✅ Python API hazır (Port 5000)"
+echo "✅ Python API hazır (Port 5001)"
 echo ""
 
 # 3. Python SOAP Server
@@ -59,12 +59,13 @@ echo ""
 echo "🎉 Tüm servisler başlatıldı!"
 echo ""
 echo "📊 Servis Durumu:"
-echo "  - Python API: http://localhost:5000"
+echo "  - Python API: http://localhost:5001"
 echo "  - SOAP Server: http://localhost:8000"
 echo "  - gRPC Server: localhost:50051"
 echo "  - Node.js Log: http://localhost:4000"
 echo "  - .NET Web: http://localhost:5133"
 echo ""
 echo "🌐 Web sitesini açın: http://localhost:5133"
+
 
 

@@ -77,18 +77,32 @@
                     </div>
 
                     <div id="ai-result" class="mt-4 d-none">
-                        <div class="card border-0 rounded-3 shadow-sm bg-white">
-                            <div class="card-body p-4 text-center">
-                                <span id="ai-durum" class="badge bg-warning text-dark fs-6 px-3 py-2">Hesaplanıyor...</span>
-                                <h2 class="fw-bold mt-3 text-primary" id="ai-tahmin">0 TL</h2>
-                                <p id="ai-mesaj" class="text-muted">Analiz sonucu bekleniyor.</p>
+                        <div class="card border-0 rounded-4 shadow-lg overflow-hidden" style="background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);">
+                            <div class="card-body p-5">
+                                <!-- AI Analiz Sonucu -->
+                                <div class="text-center mb-4">
+                                    <div id="ai-durum-badge" class="mb-3">
+                                        <span id="ai-durum" class="badge rounded-pill fs-6 px-4 py-3 shadow-sm">
+                                            <i class="fa-solid fa-circle-check me-2"></i>
+                                            <span id="ai-durum-text">Hesaplanıyor...</span>
+                                        </span>
+                                    </div>
+                                    <div class="my-4">
+                                        <p class="text-muted small mb-2">Yapay Zeka Tahmini Fiyat</p>
+                                        <h2 class="fw-bold display-5 text-primary mb-2" id="ai-tahmin">0 TL</h2>
+                                    </div>
+                                    <div class="bg-white rounded-3 p-3 shadow-sm">
+                                        <p id="ai-mesaj" class="text-muted mb-0 fw-medium">Analiz sonucu bekleniyor.</p>
+                                    </div>
+                                </div>
                                 
-                                <div id="suggestions-box" class="mt-3 d-none text-start">
-                                    <hr>
-                                    <h6 class="fw-bold text-success small mb-3">
-                                        <i class="fa-solid fa-lightbulb"></i> Sizin İçin Daha Uygun Alternatifler:
-                                    </h6>
-                                    <ul id="ai-suggestions" class="list-group list-group-flush"></ul>
+                                <!-- Alternatif Ürünler -->
+                                <div id="suggestions-box" class="mt-5 d-none">
+                                    <hr class="my-4">
+                                    <h5 class="fw-bold text-success mb-4">
+                                        <i class="fa-solid fa-lightbulb me-2"></i> Sizin İçin Daha Uygun Alternatifler:
+                                    </h5>
+                                    <div id="ai-suggestions" class="row g-3"></div>
                                 </div>
                             </div>
                         </div>
@@ -220,9 +234,8 @@
             const categoryName = @Json.Serialize(Model.Category?.Name ?? "");
             const productId = @Model.Id;
             
-            // Fiyatı güvenli şekilde sayıya çevir (Nokta/Virgül sorununu çözer)
-            const rawPriceCsharp = "@Model.CurrentPrice"; 
-            let priceVal = parseFloat(rawPriceCsharp.replace("TL", "").replace(/\./g, "").replace(",", ".")) || 0;
+            // Fiyatı güvenli şekilde sayıya çevir (C# double direkt sayı olarak)
+            const priceVal = @(Model.CurrentPrice?.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) ?? "0");
 
             console.log("✅ Sayfa Hazır. Ürün:", modelName);
 
@@ -455,8 +468,8 @@
 
                 console.log("📡 API İsteği:", productData);
 
-                // İstek At (Port 5000)
-                fetch('http://localhost:5000/predict', {
+                // İstek At (Port 5001 - macOS AirPlay port 5000'i kullandığı için)
+                fetch('http://localhost:5001/predict', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(productData)
@@ -472,28 +485,55 @@
                     document.getElementById("ai-tahmin").innerText = data.tahmin + " TL";
                     document.getElementById("ai-mesaj").innerText = data.mesaj;
                     
+                    // Badge ve İkon Güncellemesi
                     const badge = document.getElementById("ai-durum");
-                    badge.innerText = data.durum;
+                    const badgeText = document.getElementById("ai-durum-text");
+                    const badgeIcon = badge.querySelector('i');
                     
-                    // Renkler
-                    badge.className = "badge rounded-pill fs-6 px-3 py-2"; 
-                    if(data.durum.includes("Pahalı")) badge.classList.add("bg-danger");
-                    else if(data.durum.includes("Ucuz")) badge.classList.add("bg-success");
-                    else badge.classList.add("bg-warning", "text-dark");
+                    badge.className = "badge rounded-pill fs-6 px-4 py-3 shadow-sm";
+                    badgeText.innerText = data.durum;
+                    
+                    // Renk ve ikon ayarları
+                    if(data.durum.includes("Pahalı")) {
+                        badge.classList.add("bg-danger", "text-white");
+                        badgeIcon.className = "fa-solid fa-circle-exclamation me-2";
+                    } else if(data.durum.includes("Ucuz")) {
+                        badge.classList.add("bg-success", "text-white");
+                        badgeIcon.className = "fa-solid fa-circle-check me-2";
+                    } else {
+                        badge.classList.add("bg-warning", "text-dark");
+                        badgeIcon.className = "fa-solid fa-circle-info me-2";
+                    }
 
-                    // Öneriler
-                    const list = document.getElementById("ai-suggestions");
-                    list.innerHTML = "";
+                    // Öneriler - Güzel Card Tasarımı
+                    const suggestionsContainer = document.getElementById("ai-suggestions");
+                    suggestionsContainer.innerHTML = "";
                     if (data.oneriler && data.oneriler.length > 0) {
                         data.oneriler.forEach(item => {
-                            list.innerHTML += `
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div class="d-flex align-items-center">
-                                        <img src="${item.resim}" style="width:30px; height:30px; object-fit:contain; margin-right:10px;" onerror="this.src='https://via.placeholder.com/30'">
-                                        <a href="${item.link}" target="_blank" class="fw-bold text-dark text-decoration-none small">${item.ad.substring(0,30)}...</a>
+                            const col = document.createElement('div');
+                            col.className = "col-md-4 col-sm-6";
+                            col.innerHTML = `
+                                <div class="card h-100 border-0 shadow-sm hover-lift" style="transition: all 0.3s ease;">
+                                    <div class="card-body p-3">
+                                        <div class="text-center mb-3">
+                                            <img src="${item.resim}" 
+                                                 class="img-fluid rounded" 
+                                                 style="max-height: 120px; width: auto; object-fit: contain;" 
+                                                 onerror="this.src='https://via.placeholder.com/150?text=Ürün'"
+                                                 alt="${item.ad.substring(0, 50)}">
+                                        </div>
+                                        <h6 class="card-title fw-bold text-dark mb-2" style="font-size: 0.9rem; min-height: 2.5rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                            ${item.ad.length > 60 ? item.ad.substring(0, 60) + '...' : item.ad}
+                                        </h6>
+                                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                                            <span class="badge bg-primary fs-6 px-3 py-2">${item.fiyat} TL</span>
+                                            <a href="${item.link}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill">
+                                                <i class="fa-solid fa-external-link-alt me-1"></i> İncele
+                                            </a>
+                                        </div>
                                     </div>
-                                    <span class="badge bg-primary">${item.fiyat} TL</span>
-                                </li>`;
+                                </div>`;
+                            suggestionsContainer.appendChild(col);
                         });
                         document.getElementById("suggestions-box").classList.remove("d-none");
                     } else {
@@ -535,5 +575,35 @@
     #favoriteBtn:hover {
         transform: scale(1.1);
         transition: transform 0.2s;
+    }
+    
+    /* AI Analiz Sonuçları için Özel Stil */
+    #ai-result .card {
+        border: 2px solid rgba(111, 66, 193, 0.1);
+    }
+    
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    #ai-durum-badge .badge {
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    #ai-result #ai-tahmin {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    #suggestions-box .card {
+        border-radius: 12px;
+    }
+    
+    #suggestions-box .card-title {
+        line-height: 1.4;
     }
 </style>
