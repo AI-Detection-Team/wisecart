@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -19,22 +22,45 @@ namespace WiseCart_Web.Controllers
         }
 
         // GET: Profile
+        [HttpGet]
+        [Route("Profile")]
+        [Route("Profile/Index")]
         public async Task<IActionResult> Index()
         {
-            var userIdClaim = User.FindFirst("UserId");
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+            try
             {
-                return RedirectToAction("Login", "Account");
-            }
+                // Kullanıcı giriş yapmış mı kontrol et
+                if (!User.Identity?.IsAuthenticated ?? true)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
 
-            var user = await _context.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.Id == userId);
+                var userIdClaim = User.FindFirst("UserId");
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    // UserId claim'i yoksa, logout yap ve login sayfasına yönlendir
+                    try
+                    {
+                        await HttpContext.SignOutAsync();
+                    }
+                    catch { }
+                    return RedirectToAction("Login", "Account");
+                }
 
-            if (user == null)
-            {
-                return NotFound();
-            }
+                var user = await _context.Users
+                    .Include(u => u.Role)
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+
+                if (user == null)
+                {
+                    // Kullanıcı bulunamadı, logout yap
+                    try
+                    {
+                        await HttpContext.SignOutAsync();
+                    }
+                    catch { }
+                    return RedirectToAction("Login", "Account");
+                }
 
             // Favori sayısını hesapla
             var favoriteCount = await _context.Favorites
@@ -48,18 +74,35 @@ namespace WiseCart_Web.Controllers
                 membershipDays = (DateTime.Now - user.CreatedAt.Value).Days;
             }
 
-            ViewBag.FavoriteCount = favoriteCount;
-            ViewBag.MembershipDays = membershipDays;
+                ViewBag.FavoriteCount = favoriteCount;
+                ViewBag.MembershipDays = membershipDays;
 
-            return View(user);
+                return View(user);
+            }
+            catch (Exception ex)
+            {
+                // Hata durumunda login sayfasına yönlendir
+                try
+                {
+                    await HttpContext.SignOutAsync();
+                }
+                catch { }
+                return RedirectToAction("Login", "Account");
+            }
         }
 
         // GET: Profile/Settings
         public async Task<IActionResult> Settings()
         {
+            if (!User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
             var userIdClaim = User.FindFirst("UserId");
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
             {
+                await HttpContext.SignOutAsync();
                 return RedirectToAction("Login", "Account");
             }
 
@@ -69,7 +112,8 @@ namespace WiseCart_Web.Controllers
 
             if (user == null)
             {
-                return NotFound();
+                await HttpContext.SignOutAsync();
+                return RedirectToAction("Login", "Account");
             }
 
             return View(user);
@@ -153,9 +197,15 @@ namespace WiseCart_Web.Controllers
         // GET: Profile/Favorites
         public async Task<IActionResult> Favorites()
         {
+            if (!User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
             var userIdClaim = User.FindFirst("UserId");
             if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
             {
+                await HttpContext.SignOutAsync();
                 return RedirectToAction("Login", "Account");
             }
 

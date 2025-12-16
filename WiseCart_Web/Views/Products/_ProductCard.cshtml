@@ -1,0 +1,39 @@
+@model WiseCart_Web.Models.Product
+
+@* PartialView: Ürün kartı bileşeni (PartialView kullanımı için) *@
+<div class="col">
+    <div class="card h-100 shadow-sm border-0 hover-card">
+        <div class="position-relative bg-white p-3 text-center" style="height: 200px;">
+            @if (User.Identity.IsAuthenticated)
+            {
+                <button class="favorite-btn position-absolute top-0 end-0 m-2 btn btn-sm border-0 rounded-circle shadow-sm" 
+                        data-product-id="@Model.Id" 
+                        style="background: rgba(255, 255, 255, 0.9); z-index: 10; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"
+                        title="Favorilere Ekle">
+                    <i class="fa-regular fa-heart text-danger" style="font-size: 1.2rem;"></i>
+                </button>
+            }
+            <img src="@(string.IsNullOrEmpty(Model.ImageUrl) ? "https://via.placeholder.com/300?text=Urun" : Model.ImageUrl)" 
+                 class="img-fluid" style="max-height: 100%; object-fit: contain;" 
+                 alt="@Model.Name"
+                 onerror="this.src='https://via.placeholder.com/300?text=Resim+Yok'">
+        </div>
+        
+        <div class="card-body">
+            <h6 class="card-title text-truncate" title="@Model.Name">
+                @Model.Name
+            </h6>
+            <p class="text-muted small mb-2">
+                <span class="badge bg-secondary bg-opacity-10 text-secondary border">@Model.Category?.Name</span>
+                <span class="badge bg-info text-dark ms-1">@Model.Brand?.Name</span>
+            </p>
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-success fs-5">@Model.CurrentPrice?.ToString("N0") TL</span>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-sm btn-primary">
+                    <i class="fa-solid fa-eye"></i> Detay
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+

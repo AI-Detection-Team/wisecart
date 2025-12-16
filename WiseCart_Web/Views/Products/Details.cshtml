@@ -468,8 +468,9 @@
 
                 console.log("📡 API İsteği:", productData);
 
-                // İstek At (Port 5001 - macOS AirPlay port 5000'i kullandığı için)
-                fetch('http://localhost:5001/predict', {
+                // İstek At (Configuration'dan gelen URL kullanılıyor)
+                const apiUrl = '@(ViewBag.PythonApiUrl ?? "http://localhost:5000")';
+                fetch(`${apiUrl}/predict`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(productData)

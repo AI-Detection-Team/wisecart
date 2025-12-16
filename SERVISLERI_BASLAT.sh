@@ -1,6 +1,11 @@
 #!/bin/bash
 
+# Proje dizinini dinamik olarak bul (hardcoded path yerine)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$SCRIPT_DIR"
+
 echo "🚀 WiseCart Tüm Servisleri Başlatılıyor..."
+echo "📁 Proje Dizini: $PROJECT_ROOT"
 echo ""
 
 # 1. SQL Server Docker Container
@@ -12,7 +17,7 @@ echo ""
 
 # 2. Python Flask API Server
 echo "🐍 Python Flask API Server başlatılıyor..."
-cd /Users/pinareray/Desktop/wisecart/AI_Engine
+cd "$PROJECT_ROOT/AI_Engine"
 pkill -f "python3 api_server.py" 2>/dev/null
 python3 api_server.py > /tmp/wisecart_api.log 2>&1 &
 sleep 3
@@ -21,7 +26,7 @@ echo ""
 
 # 3. Python SOAP Server
 echo "🌐 Python SOAP Server başlatılıyor..."
-cd /Users/pinareray/Desktop/wisecart/AI_Engine
+cd "$PROJECT_ROOT/AI_Engine"
 pkill -f "python3 soap_server.py" 2>/dev/null
 python3 soap_server.py > /tmp/wisecart_soap.log 2>&1 &
 sleep 2
@@ -30,7 +35,7 @@ echo ""
 
 # 4. Python gRPC Server
 echo "📡 Python gRPC Server başlatılıyor..."
-cd /Users/pinareray/Desktop/wisecart/AI_Engine
+cd "$PROJECT_ROOT/AI_Engine"
 pkill -f "python3 grpc_server.py" 2>/dev/null
 python3 grpc_server.py > /tmp/wisecart_grpc.log 2>&1 &
 sleep 2
@@ -39,7 +44,7 @@ echo ""
 
 # 5. Node.js Log Service
 echo "📝 Node.js Log Service başlatılıyor..."
-cd /Users/pinareray/Desktop/wisecart/Log_Service
+cd "$PROJECT_ROOT/Log_Service"
 pkill -f "node server.js" 2>/dev/null
 node server.js > /tmp/wisecart_log.log 2>&1 &
 sleep 2
@@ -48,7 +53,7 @@ echo ""
 
 # 6. .NET Web Application
 echo "🌐 .NET Web Application başlatılıyor..."
-cd /Users/pinareray/Desktop/wisecart/WiseCart_Web
+cd "$PROJECT_ROOT/WiseCart_Web"
 pkill -f "dotnet run" 2>/dev/null
 sleep 2
 ASPNETCORE_ENVIRONMENT=Development dotnet run --urls "http://localhost:5133" > /tmp/wisecart_web.log 2>&1 &
@@ -59,7 +64,7 @@ echo ""
 echo "🎉 Tüm servisler başlatıldı!"
 echo ""
 echo "📊 Servis Durumu:"
-echo "  - Python API: http://localhost:5001"
+echo "  - Python API: http://localhost:5000"
 echo "  - SOAP Server: http://localhost:8000"
 echo "  - gRPC Server: localhost:50051"
 echo "  - Node.js Log: http://localhost:4000"

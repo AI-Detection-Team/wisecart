@@ -10,6 +10,15 @@
 }
 
 <div class="container-fluid py-4">
+    @* TempData ile başarı mesajı gösterimi (ViewData/TempData kullanımı) *@
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fa-solid fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold text-dark"><i class="fa-solid fa-user-shield"></i> Yönetim Paneli</h2>
@@ -100,12 +109,17 @@
                             <td class="fw-bold text-success">@item.CurrentPrice?.ToString("N0") TL</td>
                             <td><span class="badge bg-secondary bg-opacity-10 text-secondary border">@item.Category?.Name</span></td>
                             <td class="text-end pe-4">
-                                <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline;"
-                                      onsubmit="return confirm('❗ DİKKAT: @item.Name ürününü silmek istediğinize emin misiniz?');">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Sil">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </form>
+                                <div class="btn-group" role="group">
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" title="Düzenle">
+                                        <i class="fa-solid fa-pencil"></i>
+                                    </a>
+                                    <form asp-action="Delete" asp-route-id="@item.Id" method="post" style="display:inline;"
+                                          onsubmit="return confirm('❗ DİKKAT: @item.Name ürününü silmek istediğinize emin misiniz?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Sil">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     }

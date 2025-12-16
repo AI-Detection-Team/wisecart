@@ -10,10 +10,12 @@ namespace WiseCart_Web.Controllers
     public class ProductsController : Controller
     {
         private readonly WiseCartDbContext _context;
+        private readonly IConfiguration _configuration;
 
-        public ProductsController(WiseCartDbContext context)
+        public ProductsController(WiseCartDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         // GET: Products (Filtreleme, Arama ve Sayfalama içerir)
@@ -58,6 +60,10 @@ namespace WiseCart_Web.Controllers
             
             // Kategori Listesini Dropdown için gönder
             ViewBag.Categories = await _context.Categories.Select(c => c.Name).Distinct().ToListAsync();
+            
+            // API URL'lerini ViewBag'e ekle (hardcoded URL yerine configuration'dan)
+            ViewBag.PythonApiUrl = _configuration["ApiSettings:PythonApiUrl"] ?? "http://localhost:5000";
+            ViewBag.LogServiceUrl = _configuration["ApiSettings:LogServiceUrl"] ?? "http://localhost:4000";
 
             return View(products);
         }
@@ -84,6 +90,9 @@ namespace WiseCart_Web.Controllers
                 .ToListAsync();
 
             ViewBag.SimilarProducts = similarProducts;
+            
+            // API URL'lerini ViewBag'e ekle (hardcoded URL yerine configuration'dan)
+            ViewBag.PythonApiUrl = _configuration["ApiSettings:PythonApiUrl"] ?? "http://localhost:5000";
 
             // --- SOA ENTEGRASYONU: NODE.JS LOGLAMA ---
             // Kullanıcı bu ürüne baktığında Node.js servisine haber veriyoruz.
@@ -102,8 +111,9 @@ namespace WiseCart_Web.Controllers
                             details = $"Ürün: {product.Name} (Fiyat: {product.CurrentPrice} TL)"
                         };
                         
-                        // Node.js servisine (Port 4000) veri gönder
-                        await client.PostAsJsonAsync("http://localhost:4000/api/log", logData);
+                        // Node.js servisine veri gönder (configuration'dan URL al)
+                        var logServiceUrl = _configuration["ApiSettings:LogServiceUrl"] ?? "http://localhost:4000";
+                        await client.PostAsJsonAsync($"{logServiceUrl}/api/log", logData);
                     }
                 }
                 catch

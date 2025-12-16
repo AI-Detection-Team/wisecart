@@ -113,6 +113,12 @@ namespace WiseCart_Web.Controllers
             return RedirectToAction("Index", "Home");
         }
 
+        // --- ERİŞİM REDDEDİLDİ (ACCESS DENIED) ---
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+
         // Basit MD5 Hash Fonksiyonu
         private string MD5Hash(string input)
         {

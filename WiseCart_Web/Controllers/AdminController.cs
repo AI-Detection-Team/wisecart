@@ -100,6 +100,9 @@ namespace WiseCart_Web.Controllers
                 _context.Add(history);
                 await _context.SaveChangesAsync();
 
+                // TempData ile başarı mesajı gönder (ViewData/TempData kullanımı için)
+                TempData["SuccessMessage"] = $"Ürün '{product.Name}' başarıyla eklendi!";
+                
                 return RedirectToAction(nameof(Index));
             }
             
@@ -107,6 +110,101 @@ namespace WiseCart_Web.Controllers
             ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
             ViewData["BrandId"] = new SelectList(_context.Brands, "Id", "Name", product.BrandId);
             return View(product);
+        }
+
+        // 5. GÜNCELLEME SAYFASI (UPDATE GET)
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var product = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
+            ViewData["BrandId"] = new SelectList(_context.Brands, "Id", "Name", product.BrandId);
+            
+            return View(product);
+        }
+
+        // 6. GÜNCELLEME İŞLEMİ (UPDATE POST)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, Product product)
+        {
+            if (id != product.Id)
+            {
+                return NotFound();
+            }
+
+            if (ModelState.IsValid || true)
+            {
+                try
+                {
+                    var existingProduct = await _context.Products.FindAsync(id);
+                    if (existingProduct == null)
+                    {
+                        return NotFound();
+                    }
+
+                    // Fiyat değiştiyse PriceHistory'ye ekle
+                    if (existingProduct.CurrentPrice != product.CurrentPrice)
+                    {
+                        var history = new PriceHistory
+                        {
+                            ProductId = product.Id,
+                            Price = product.CurrentPrice ?? 0,
+                            Date = DateTime.Now
+                        };
+                        _context.PriceHistories.Add(history);
+                    }
+
+                    // Ürün bilgilerini güncelle
+                    existingProduct.Name = product.Name;
+                    existingProduct.Model = product.Model;
+                    existingProduct.CurrentPrice = product.CurrentPrice;
+                    existingProduct.ReviewCount = product.ReviewCount;
+                    existingProduct.CategoryId = product.CategoryId;
+                    existingProduct.BrandId = product.BrandId;
+                    existingProduct.ImageUrl = product.ImageUrl;
+                    existingProduct.Url = product.Url;
+
+                    await _context.SaveChangesAsync();
+
+                    // TempData ile başarı mesajı gönder
+                    TempData["SuccessMessage"] = $"Ürün '{product.Name}' başarıyla güncellendi!";
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!ProductExists(product.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index));
+            }
+
+            ViewData["CategoryId"] = new SelectList(_context.Categories, "Id", "Name", product.CategoryId);
+            ViewData["BrandId"] = new SelectList(_context.Brands, "Id", "Name", product.BrandId);
+            return View(product);
+        }
+
+        private bool ProductExists(int id)
+        {
+            return _context.Products.Any(e => e.Id == id);
         }
     }
 }
