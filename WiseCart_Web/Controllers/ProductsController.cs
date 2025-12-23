@@ -7,6 +7,7 @@ using System.Net.Http.Json; // JSON formatında veri göndermek için gerekli
 
 namespace WiseCart_Web.Controllers
 {
+    // 📋 İSTER 1: Controller - ProductsController
     public class ProductsController : Controller
     {
         private readonly WiseCartDbContext _context;
@@ -18,12 +19,16 @@ namespace WiseCart_Web.Controllers
             _configuration = configuration;
         }
 
+        // 📋 İSTER 1: Action - Index (Filtreleme, Arama ve Sayfalama içerir)
+        // 📋 İSTER 2: Esnek View - Dinamik filtreleme ve sayfalama
         // GET: Products (Filtreleme, Arama ve Sayfalama içerir)
         public async Task<IActionResult> Index(string searchString, string category, int page = 1)
         {
             int pageSize = 24; // Her sayfada kaç ürün görünsün?
 
-            // 1. Sorguyu Hazırla
+            // 📊 PERFORMANS: Eager Loading (Include) - Category ve Brand bilgilerini tek sorguda çek
+            // N+1 sorgu problemini önler, ilişkili verileri önceden yükler
+            // 📊 PERFORMANS: AsQueryable() - Sorguyu erteleyerek filtreleme yapabilmeyi sağlar
             var productsQuery = _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
@@ -41,11 +46,12 @@ namespace WiseCart_Web.Controllers
                 productsQuery = productsQuery.Where(p => p.Name.Contains(searchString) || p.Brand.Name.Contains(searchString));
             }
 
-            // 4. Toplam Sayıyı Bul (Sayfalama için)
+            // 📊 PERFORMANS: CountAsync() - Asenkron sayma işlemi (UI thread'i bloklamaz)
             int totalItems = await productsQuery.CountAsync();
             var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
 
-            // 5. Sayfalama Yap ve Veriyi Çek
+            // 📊 PERFORMANS: Sayfalama (Pagination) - Skip() ve Take() ile sadece gerekli kayıtları çek
+            // Tüm veriyi belleğe yüklemek yerine sadece sayfa başına 24 ürün çeker
             var products = await productsQuery
                 .OrderByDescending(p => p.Id) // En yeniler üstte
                 .Skip((page - 1) * pageSize)
@@ -58,21 +64,24 @@ namespace WiseCart_Web.Controllers
             ViewBag.CurrentCategory = category;
             ViewBag.CurrentSearch = searchString;
             
-            // Kategori Listesini Dropdown için gönder
+            // 📊 PERFORMANS: Select() - Sadece Name kolonunu çek (tüm entity yerine)
+            // Gereksiz veri transferini önler, bellek kullanımını azaltır
             ViewBag.Categories = await _context.Categories.Select(c => c.Name).Distinct().ToListAsync();
             
             // API URL'lerini ViewBag'e ekle (hardcoded URL yerine configuration'dan)
-            ViewBag.PythonApiUrl = _configuration["ApiSettings:PythonApiUrl"] ?? "http://localhost:5000";
+            ViewBag.PythonApiUrl = _configuration["ApiSettings:PythonApiUrl"] ?? "http://localhost:5001";
             ViewBag.LogServiceUrl = _configuration["ApiSettings:LogServiceUrl"] ?? "http://localhost:4000";
 
             return View(products);
         }
 
+        // 📋 İSTER 1: Action - Details
         // GET: Products/Details/5 (SOA Loglama Entegre Edildi)
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
 
+            // 📊 PERFORMANS: Eager Loading - Category ve Brand bilgilerini tek sorguda çek
             var product = await _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
@@ -80,7 +89,8 @@ namespace WiseCart_Web.Controllers
 
             if (product == null) return NotFound();
 
-            // Benzer ürünleri çek (aynı kategoriden, farklı ürün, rastgele 4 tane)
+            // 📊 PERFORMANS: Take(4) - Sadece 4 benzer ürün çek (tüm listeyi çekme)
+            // 📊 PERFORMANS: Eager Loading - Category ve Brand bilgilerini tek sorguda çek
             var similarProducts = await _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
@@ -89,12 +99,14 @@ namespace WiseCart_Web.Controllers
                 .Take(4)
                 .ToListAsync();
 
+            // 📋 İSTER 7: ViewBag kullanımı - Benzer ürünler ve API URL'leri View'a aktarılır
             ViewBag.SimilarProducts = similarProducts;
             
             // API URL'lerini ViewBag'e ekle (hardcoded URL yerine configuration'dan)
-            ViewBag.PythonApiUrl = _configuration["ApiSettings:PythonApiUrl"] ?? "http://localhost:5000";
+            ViewBag.PythonApiUrl = _configuration["ApiSettings:PythonApiUrl"] ?? "http://localhost:5001";
 
             // --- SOA ENTEGRASYONU: NODE.JS LOGLAMA ---
+            // 📊 PERFORMANS: Task.Run() - Async işlemi arka planda çalıştır (Fire and Forget)
             // Kullanıcı bu ürüne baktığında Node.js servisine haber veriyoruz.
             // Bu işlem "Fire and Forget" (Ateşle ve Unut) mantığıyla yapılır, siteyi yavaşlatmaz.
             _ = Task.Run(async () =>

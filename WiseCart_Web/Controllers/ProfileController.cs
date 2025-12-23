@@ -11,6 +11,7 @@ using WiseCart_Web.Models;
 
 namespace WiseCart_Web.Controllers
 {
+    // 📋 İSTER 1: Controller - ProfileController
     [Authorize]
     public class ProfileController : Controller
     {
@@ -21,6 +22,7 @@ namespace WiseCart_Web.Controllers
             _context = context;
         }
 
+        // 📋 İSTER 1: Action - Index
         // GET: Profile
         [HttpGet]
         [Route("Profile")]
@@ -47,6 +49,7 @@ namespace WiseCart_Web.Controllers
                     return RedirectToAction("Login", "Account");
                 }
 
+                // 📊 PERFORMANS: Eager Loading (Include) - Role bilgisini tek sorguda çek
                 var user = await _context.Users
                     .Include(u => u.Role)
                     .FirstOrDefaultAsync(u => u.Id == userId);
@@ -62,7 +65,7 @@ namespace WiseCart_Web.Controllers
                     return RedirectToAction("Login", "Account");
                 }
 
-            // Favori sayısını hesapla
+            // 📊 PERFORMANS: CountAsync() - Asenkron sayma işlemi (sadece sayıyı çeker, tüm kayıtları değil)
             var favoriteCount = await _context.Favorites
                 .Where(f => f.UserId == userId)
                 .CountAsync();
@@ -74,6 +77,7 @@ namespace WiseCart_Web.Controllers
                 membershipDays = (DateTime.Now - user.CreatedAt.Value).Days;
             }
 
+                // 📋 İSTER 7: ViewBag kullanımı - Favori sayısı ve üyelik günü View'a aktarılır
                 ViewBag.FavoriteCount = favoriteCount;
                 ViewBag.MembershipDays = membershipDays;
 
@@ -91,6 +95,7 @@ namespace WiseCart_Web.Controllers
             }
         }
 
+        // 📋 İSTER 1: Action - Settings
         // GET: Profile/Settings
         public async Task<IActionResult> Settings()
         {
@@ -194,6 +199,7 @@ namespace WiseCart_Web.Controllers
             return Json(new { success = true, message = "Şifre başarıyla değiştirildi." });
         }
 
+        // 📋 İSTER 1: Action - Favorites
         // GET: Profile/Favorites
         public async Task<IActionResult> Favorites()
         {
@@ -209,6 +215,8 @@ namespace WiseCart_Web.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
+            // 📊 PERFORMANS: Eager Loading (Include + ThenInclude) - Product, Brand ve Category bilgilerini tek sorguda çek
+            // N+1 sorgu problemini önler, tüm ilişkili verileri önceden yükler
             var favorites = await _context.Favorites
                 .Include(f => f.Product)
                     .ThenInclude(p => p.Brand)

@@ -295,3 +295,7 @@ Bu rehberi takip ederek:
 
 **Veri ambarı hazır! Şimdi SSIS ve OLAP Cube'a geçebilirsiniz!** 🚀
 
+
+
+
+

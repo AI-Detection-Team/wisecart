@@ -1,17 +1,17 @@
--- 1. Fiyat 0'dan küçük olamaz
+-- 📊 VERİ BÜTÜNLÜĞÜ: CHECK CONSTRAINT - Fiyat 0'dan küçük olamaz
 ALTER TABLE Products
 ADD CONSTRAINT CK_Product_Price CHECK (CurrentPrice >= 0);
 
--- 2. Stok/Yorum sayısı negatif olamaz
+-- 📊 VERİ BÜTÜNLÜĞÜ: CHECK CONSTRAINT - Stok/Yorum sayısı negatif olamaz
 ALTER TABLE Products
 ADD CONSTRAINT CK_Product_ReviewCount CHECK (ReviewCount >= 0);
 
--- 3. Kullanıcı adı benzersiz olmalı (Aynı isimle iki kişi olamaz)
+-- 📊 VERİ BÜTÜNLÜĞÜ: UNIQUE CONSTRAINT - Kullanıcı adı benzersiz olmalı (Aynı isimle iki kişi olamaz)
 -- (Eğer tabloyu oluştururken unique yapmadıysak bu garanti eder)
 ALTER TABLE Users
 ADD CONSTRAINT UQ_Username UNIQUE (Username);
 
--- 4. Email benzersiz olmalı
+-- 📊 VERİ BÜTÜNLÜĞÜ: UNIQUE CONSTRAINT - Email benzersiz olmalı
 ALTER TABLE Users
 ADD CONSTRAINT UQ_Email UNIQUE (Email);
 
@@ -19,7 +19,9 @@ ADD CONSTRAINT UQ_Email UNIQUE (Email);
 -- (Not: Eğer tabloda boş veri varsa bu hata verebilir, önce veriler temiz olmalı)
 -- ALTER TABLE Products ALTER COLUMN Name NVARCHAR(500) NOT NULL; -- Örnek
 
+-- 📊 PERFORMANS: VIEW - Önceden hesaplanmış JOIN sorgusu (Performans optimizasyonu)
 -- View 1: Ürünlerin Detaylı Listesi (Marka ve Kategori İsimleriyle)
+-- Her seferinde JOIN yapmak yerine view kullanarak sorgu performansını artırır
 CREATE VIEW vw_ProductDetails AS
 SELECT 
     p.Id, 
@@ -34,7 +36,9 @@ JOIN Categories c ON p.CategoryId = c.Id
 JOIN Brands b ON p.BrandId = b.Id;
 GO
 
+-- 📊 PERFORMANS: VIEW - Önceden hesaplanmış aggregate sorgusu (Performans optimizasyonu)
 -- View 2: Kategori Bazlı Ortalama Fiyat Analizi
+-- GROUP BY ve AVG işlemleri önceden hesaplanır, sorgu hızlanır
 CREATE VIEW vw_CategoryStats AS
 SELECT 
     c.Name AS CategoryName, 
@@ -45,6 +49,7 @@ JOIN Categories c ON p.CategoryId = c.Id
 GROUP BY c.Name;
 GO
 
+-- 📊 PERFORMANS: VIEW + TOP 50 - Sadece ilk 50 kaydı çeker (Performans optimizasyonu)
 -- View 3: En Çok Yorumlanan 50 Ürün (Popüler Ürünler)
 CREATE VIEW vw_TopReviewedProducts AS
 SELECT TOP 50
@@ -57,6 +62,7 @@ JOIN Brands b ON p.BrandId = b.Id
 ORDER BY p.ReviewCount DESC;
 GO
 
+-- 📊 PERFORMANS: VIEW - Önceden hesaplanmış aggregate sorgusu (Performans optimizasyonu)
 -- View 4: Markalara Göre Ürün Sayısı
 CREATE VIEW vw_BrandProductCounts AS
 SELECT 
@@ -73,8 +79,10 @@ SELECT * FROM vw_ProductDetails
 WHERE CurrentPrice > 50000;
 GO
 
+-- 📊 PERFORMANS: STORED PROCEDURE - Önceden derlenmiş sorgu (Performans optimizasyonu)
 -- Proc 1: Belirli bir fiyat aralığındaki ürünleri getir
 -- Kullanımı: EXEC sp_GetProductsByPriceRange 10000, 20000
+-- Stored procedure'lar önceden derlenir ve daha hızlı çalışır
 CREATE PROCEDURE sp_GetProductsByPriceRange
     @MinPrice float,
     @MaxPrice float
@@ -86,6 +94,7 @@ BEGIN
 END;
 GO
 
+-- 📊 PERFORMANS: STORED PROCEDURE + TOP 5 - Önceden derlenmiş sorgu (Performans optimizasyonu)
 -- Proc 2: Bir kategorideki en ucuz 5 ürünü getir
 -- Kullanımı: EXEC sp_GetCheapProductsByCategory 'Laptop'
 CREATE PROCEDURE sp_GetCheapProductsByCategory
@@ -104,17 +113,18 @@ GO
 --10.12.2025
 
 
--- Fiyat Asla Negatif Olamaz
+-- 📊 VERİ BÜTÜNLÜĞÜ: CHECK CONSTRAINT - Fiyat Asla Negatif Olamaz
 ALTER TABLE Products ADD CONSTRAINT CK_Price_Positive CHECK (CurrentPrice >= 0);
 
 -- Ürün İsimleri Tekrar Etmesin (Aynı isimle 2. ürün girilemesin)
 -- (Not: Eğer veride tekrar varsa bu hata verir, önce temizlik gerekebilir)
 -- ALTER TABLE Products ADD CONSTRAINT UQ_ProductName UNIQUE (Name);
 
--- Stok/Yorum Sayısı 0'dan küçük olamaz
+-- 📊 VERİ BÜTÜNLÜĞÜ: CHECK CONSTRAINT - Stok/Yorum Sayısı 0'dan küçük olamaz
 ALTER TABLE Products ADD CONSTRAINT CK_Review_Positive CHECK (ReviewCount >= 0);
 
 
+-- 📊 PERFORMANS: VIEW - Önceden hesaplanmış aggregate sorgusu (Performans optimizasyonu)
 -- Kategori Bazlı Fiyat Analizi Raporu
 CREATE VIEW vw_CategoryAnalytics AS
 SELECT 
@@ -131,6 +141,7 @@ GO
 
 
 
+-- 📊 PERFORMANS: STORED PROCEDURE - Önceden derlenmiş sorgu (Performans optimizasyonu)
 -- Fiyat Aralığına Göre Ürün Getiren Fonksiyon
 CREATE PROCEDURE sp_GetProductsByRange
     @MinPrice float,

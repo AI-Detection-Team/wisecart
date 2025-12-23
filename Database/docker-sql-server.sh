@@ -26,3 +26,7 @@ echo "📝 Connection String:"
 echo "Server=localhost,1433;Database=WiseCartDB;User Id=sa;Password=WiseCart123!;TrustServerCertificate=True;"
 
 
+
+
+
+

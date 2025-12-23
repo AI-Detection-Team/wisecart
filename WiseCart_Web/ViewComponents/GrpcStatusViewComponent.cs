@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 
 namespace WiseCart_Web.ViewComponents
 {
+    // 📋 İSTER 3: ViewComponent - GrpcStatus ViewComponent (gRPC entegrasyonu ile dinamik içerik)
     public class GrpcStatusViewComponent : ViewComponent
     {
         public async Task<IViewComponentResult> InvokeAsync()

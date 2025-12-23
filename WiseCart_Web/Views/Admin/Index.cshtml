@@ -1,3 +1,8 @@
+@* 📋 İSTER 2: Esnek View - Responsive tasarım, sayfalama *@
+@* 📋 İSTER 4: Layout - _Layout.cshtml kullanılıyor *@
+@* 📋 İSTER 5: CRUD - READ (Listeleme) View'ı *@
+@* 📋 İSTER 6: Kullanıcı Tipleri - Sadece Admin erişebilir *@
+@* 📋 İSTER 7: TempData kullanımı - Başarı mesajları gösteriliyor *@
 @model IEnumerable<WiseCart_Web.Models.Product>
 @{
     ViewData["Title"] = "Yönetim Paneli";
@@ -10,7 +15,7 @@
 }
 
 <div class="container-fluid py-4">
-    @* TempData ile başarı mesajı gösterimi (ViewData/TempData kullanımı) *@
+    @* 📋 İSTER 7: TempData kullanımı - Controller'dan gelen başarı mesajı gösteriliyor *@
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">

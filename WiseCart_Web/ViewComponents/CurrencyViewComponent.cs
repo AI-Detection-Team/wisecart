@@ -5,6 +5,7 @@ using System.Xml.Linq; // XML okumak için
 
 namespace WiseCart_Web.ViewComponents
 {
+    // 📋 İSTER 3: ViewComponent - Currency ViewComponent (SOAP entegrasyonu ile dinamik içerik)
     public class CurrencyViewComponent : ViewComponent
     {
         public async Task<IViewComponentResult> InvokeAsync()

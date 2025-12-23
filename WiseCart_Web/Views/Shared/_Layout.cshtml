@@ -1,3 +1,4 @@
+@* 📋 İSTER 4: Layout - Özel Layout dosyası (Tüm View'larda kullanılıyor) *@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -79,6 +80,7 @@
                             <a class="nav-link text-dark" asp-controller="Products" asp-action="Index">🛒 Ürünler & AI</a>
                         </li>
                         
+                        @* 📋 İSTER 6: Kullanıcı Tipleri - Rollere göre içerik değişimi (Admin menüsü sadece Admin'de görünür) *@
                         @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
@@ -95,6 +97,7 @@
                         </li>
                     </ul>
 
+                    @* 📋 İSTER 3: ViewComponent - Currency ViewComponent dinamik olarak çağrılıyor *@
                     @await Component.InvokeAsync("Currency")
 
                     <ul class="navbar-nav">

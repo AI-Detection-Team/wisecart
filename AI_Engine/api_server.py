@@ -5,8 +5,14 @@ import pandas as pd
 import numpy as np
 
 app = Flask(__name__)
-# Tüm kaynaklardan gelen isteklere izin ver
-CORS(app, resources={r"/*": {"origins": "*"}})
+# Tüm kaynaklardan gelen isteklere izin ver - CORS ayarları
+CORS(app, 
+     resources={r"/*": {
+         "origins": "*",
+         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+         "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"]
+     }},
+     supports_credentials=True)
 
 print("🔥 API Sunucusu (Final Sürüm) Başlatılıyor...")
 
@@ -167,8 +173,9 @@ def predict():
 def _build_cors_preflight_response():
     response = jsonify({})
     response.headers.add("Access-Control-Allow-Origin", "*")
-    response.headers.add("Access-Control-Allow-Headers", "*")
-    response.headers.add("Access-Control-Allow-Methods", "*")
+    response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+    response.headers.add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+    response.headers.add("Access-Control-Max-Age", "3600")
     return response
 
 if __name__ == '__main__':

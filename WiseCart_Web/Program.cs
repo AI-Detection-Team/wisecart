@@ -11,6 +11,7 @@ builder.Services.AddDbContext<WiseCartDbContext>(options =>
 
 // MVC Servislerini Ekle
 builder.Services.AddControllersWithViews();
+// 📋 İSTER 6: Kullanıcı Tipleri - Authentication yapılandırması (Rol bazlı erişim için)
 // Authentication Servisini Ekle
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

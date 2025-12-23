@@ -39,7 +39,10 @@ BEGIN
         [IsHoliday] BIT NOT NULL DEFAULT 0  -- Türkiye için özel günler
     );
     
+    -- 📊 INDEX: Date kolonu üzerinde index (Tarih bazlı sorguları hızlandırır)
     CREATE INDEX IX_DimDate_Date ON DimDate([Date]);
+    
+    -- 📊 INDEX: Composite Index - Year ve Month birlikte (Yıl/Ay bazlı analizleri hızlandırır)
     CREATE INDEX IX_DimDate_YearMonth ON DimDate([Year], [Month]);
     
     PRINT '✅ DimDate tablosu oluşturuldu.';
@@ -59,6 +62,8 @@ BEGIN
         [IsCurrent] BIT NOT NULL DEFAULT 1
     );
     
+    -- 📊 INDEX: UNIQUE INDEX - CategoryId üzerinde (SCD Type 2 için sadece aktif kayıtlar)
+    -- WHERE [IsCurrent] = 1: Sadece aktif kayıtlar için unique constraint
     CREATE UNIQUE INDEX IX_DimCategory_CategoryId ON DimCategory([CategoryId]) WHERE [IsCurrent] = 1;
     
     PRINT '✅ DimCategory tablosu oluşturuldu.';
@@ -78,6 +83,8 @@ BEGIN
         [IsCurrent] BIT NOT NULL DEFAULT 1
     );
     
+    -- 📊 INDEX: UNIQUE INDEX - BrandId üzerinde (SCD Type 2 için sadece aktif kayıtlar)
+    -- WHERE [IsCurrent] = 1: Sadece aktif kayıtlar için unique constraint
     CREATE UNIQUE INDEX IX_DimBrand_BrandId ON DimBrand([BrandId]) WHERE [IsCurrent] = 1;
     
     PRINT '✅ DimBrand tablosu oluşturuldu.';
@@ -107,8 +114,13 @@ BEGIN
     ADD CONSTRAINT FK_DimProduct_Brand FOREIGN KEY ([BrandKey]) 
         REFERENCES [dbo].[DimBrand]([BrandKey]);
     
+    -- 📊 INDEX: UNIQUE INDEX - ProductId üzerinde (SCD Type 2 için sadece aktif kayıtlar)
     CREATE UNIQUE INDEX IX_DimProduct_ProductId ON DimProduct([ProductId]) WHERE [IsCurrent] = 1;
+    
+    -- 📊 INDEX: CategoryKey üzerinde index (Kategori bazlı sorguları hızlandırır)
     CREATE INDEX IX_DimProduct_Category ON DimProduct([CategoryKey]);
+    
+    -- 📊 INDEX: BrandKey üzerinde index (Marka bazlı sorguları hızlandırır)
     CREATE INDEX IX_DimProduct_Brand ON DimProduct([BrandKey]);
     
     PRINT '✅ DimProduct tablosu oluşturuldu.';
@@ -129,6 +141,7 @@ BEGIN
         [IsCurrent] BIT NOT NULL DEFAULT 1
     );
     
+    -- 📊 INDEX: UNIQUE INDEX - UserId üzerinde (SCD Type 2 için sadece aktif kayıtlar)
     CREATE UNIQUE INDEX IX_DimUser_UserId ON DimUser([UserId]) WHERE [IsCurrent] = 1;
     
     PRINT '✅ DimUser tablosu oluşturuldu.';
@@ -148,6 +161,8 @@ BEGIN
         -- FOREIGN KEYS (Dimension'lara bağlantılar)
         [DateKey] INT NOT NULL,  -- DimDate
         [ProductKey] INT NOT NULL,  -- DimProduct
+        -- 📊 PERFORMANS: Denormalizasyon - CategoryKey ve BrandKey Fact tablosunda tekrarlanır
+        -- JOIN işlemlerini azaltarak OLAP sorgularını hızlandırır
         [CategoryKey] INT NOT NULL,  -- DimCategory (denormalize edilmiş, performans için)
         [BrandKey] INT NOT NULL,  -- DimBrand (denormalize edilmiş, performans için)
         
@@ -180,11 +195,20 @@ BEGIN
     ADD CONSTRAINT FK_FactSales_Brand FOREIGN KEY ([BrandKey]) 
         REFERENCES [dbo].[DimBrand]([BrandKey]);
     
-    -- INDEXES (Performans için kritik!)
+    -- 📊 INDEX: Fact tablolarında index'ler performans için kritik! (OLAP sorgularını hızlandırır)
+    -- DateKey üzerinde index (Tarih bazlı analizler)
     CREATE INDEX IX_FactSales_Date ON FactSales([DateKey]);
+    
+    -- ProductKey üzerinde index (Ürün bazlı analizler)
     CREATE INDEX IX_FactSales_Product ON FactSales([ProductKey]);
+    
+    -- CategoryKey üzerinde index (Kategori bazlı analizler)
     CREATE INDEX IX_FactSales_Category ON FactSales([CategoryKey]);
+    
+    -- BrandKey üzerinde index (Marka bazlı analizler)
     CREATE INDEX IX_FactSales_Brand ON FactSales([BrandKey]);
+    
+    -- 📊 INDEX: Composite Index - DateKey ve ProductKey birlikte (Tarih+Ürün bazlı analizler)
     CREATE INDEX IX_FactSales_DateProduct ON FactSales([DateKey], [ProductKey]);
     
     PRINT '✅ FactSales tablosu oluşturuldu.';
@@ -234,9 +258,14 @@ BEGIN
     ADD CONSTRAINT FK_FactFavorites_Brand FOREIGN KEY ([BrandKey]) 
         REFERENCES [dbo].[DimBrand]([BrandKey]);
     
-    -- INDEXES
+    -- 📊 INDEX: FactFavorites tablosunda index'ler (Kullanıcı davranış analizlerini hızlandırır)
+    -- DateKey üzerinde index (Tarih bazlı favori analizleri)
     CREATE INDEX IX_FactFavorites_Date ON FactFavorites([DateKey]);
+    
+    -- UserKey üzerinde index (Kullanıcı bazlı favori analizleri)
     CREATE INDEX IX_FactFavorites_User ON FactFavorites([UserKey]);
+    
+    -- ProductKey üzerinde index (Ürün bazlı favori analizleri)
     CREATE INDEX IX_FactFavorites_Product ON FactFavorites([ProductKey]);
     
     PRINT '✅ FactFavorites tablosu oluşturuldu.';
@@ -258,6 +287,7 @@ BEGIN
         [ErrorMessage] NVARCHAR(MAX) NULL  -- Hata mesajı (varsa)
     );
     
+    -- 📊 INDEX: UNIQUE INDEX - TableName üzerinde (ETL kontrol tablosunda her tablo için tek kayıt)
     CREATE UNIQUE INDEX IX_ETLControl_TableName ON ETLControl([TableName]);
     
     -- İlk kayıtları ekle

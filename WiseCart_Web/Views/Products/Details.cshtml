@@ -1,3 +1,5 @@
+@* 📋 İSTER 2: Esnek View - Responsive tasarım, dinamik içerik, AI entegrasyonu *@
+@* 📋 İSTER 7: ViewBag kullanımı - API URL'leri ve benzer ürünler View'a aktarılır *@
 @model WiseCart_Web.Models.Product
 
 @{
@@ -469,7 +471,7 @@
                 console.log("📡 API İsteği:", productData);
 
                 // İstek At (Configuration'dan gelen URL kullanılıyor)
-                const apiUrl = '@(ViewBag.PythonApiUrl ?? "http://localhost:5000")';
+                const apiUrl = '@(ViewBag.PythonApiUrl ?? "http://localhost:5001")';
                 fetch(`${apiUrl}/predict`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

@@ -117,3 +117,7 @@ PRINT '✅ TÜM FACT TABLOLARI YÜKLENDİ!';
 PRINT '========================================';
 PRINT '';
 
+
+
+
+

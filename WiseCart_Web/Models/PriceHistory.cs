@@ -11,7 +11,9 @@ public partial class PriceHistory
 
     public DateTime? Date { get; set; }
 
+    // 📊 NORMALİZASYON: Foreign Key - Ürün bilgisi ayrı tabloda (Products)
     public int? ProductId { get; set; }
 
+    // 📊 FOREIGN KEY İLİŞKİSİ: Navigation Property - PriceHistory -> Product (N-1 ilişki)
     public virtual Product? Product { get; set; }
 }

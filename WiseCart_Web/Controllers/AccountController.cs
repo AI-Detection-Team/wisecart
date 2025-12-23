@@ -10,6 +10,7 @@ using WiseCart_Web.Models.ViewModels;
 
 namespace WiseCart_Web.Controllers
 {
+    // 📋 İSTER 1: Controller - AccountController
     public class AccountController : Controller
     {
         private readonly WiseCartDbContext _context;
@@ -19,12 +20,14 @@ namespace WiseCart_Web.Controllers
             _context = context;
         }
 
+        // 📋 İSTER 1: Action - Login (GET)
         // --- GİRİŞ YAP (LOGIN) ---
         public IActionResult Login()
         {
             return View();
         }
 
+        // 📋 İSTER 1: Action - Login (POST)
         [HttpPost]
         public async Task<IActionResult> Login(LoginModel model)
         {
@@ -33,13 +36,15 @@ namespace WiseCart_Web.Controllers
                 // Şifreyi Hashle (Veritabanındaki formatla eşleşmeli)
                 string hashedPassword = MD5Hash(model.Password);
 
-                // Kullanıcıyı ve Rolünü Çek (Include Role çok önemli!)
+                // 📊 PERFORMANS: Eager Loading (Include) - Role bilgisini tek sorguda çek
+                // N+1 sorgu problemini önler, kullanıcı ve rol bilgisini birlikte yükler
                 var user = await _context.Users
                     .Include(u => u.Role) 
                     .FirstOrDefaultAsync(u => u.Username == model.Username && u.PasswordHash == hashedPassword);
 
                 if (user != null)
                 {
+                    // 📋 İSTER 6: Kullanıcı Tipleri - Rol bilgisi claim olarak ekleniyor (Admin/User ayrımı için)
                     // Rol adını al (Eğer boşsa 'User' varsay)
                     string roleName = user.Role?.Name ?? "User";
 
@@ -61,18 +66,21 @@ namespace WiseCart_Web.Controllers
             return View(model);
         }
 
+        // 📋 İSTER 1: Action - Register (GET)
         // --- KAYIT OL (REGISTER) ---
         public IActionResult Register()
         {
             return View();
         }
 
+        // 📋 İSTER 1: Action - Register (POST)
         [HttpPost]
         public async Task<IActionResult> Register(RegisterModel model)
         {
             if (ModelState.IsValid)
             {
-                // Kullanıcı adı var mı kontrol et
+                // 📊 PERFORMANS: AnyAsync() - Sadece varlık kontrolü yapar (tüm kaydı çekmez)
+                // Count() yerine Any() kullanmak daha performanslıdır
                 if (await _context.Users.AnyAsync(u => u.Username == model.Username))
                 {
                     ModelState.AddModelError("", "Bu kullanıcı adı zaten alınmış.");
@@ -107,12 +115,14 @@ namespace WiseCart_Web.Controllers
             return View(model);
         }
 
+        // 📋 İSTER 1: Action - Logout
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Index", "Home");
         }
 
+        // 📋 İSTER 1: Action - AccessDenied
         // --- ERİŞİM REDDEDİLDİ (ACCESS DENIED) ---
         public IActionResult AccessDenied()
         {

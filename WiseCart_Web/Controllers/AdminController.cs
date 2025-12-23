@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace WiseCart_Web.Controllers
 {
+    // 📋 İSTER 1: Controller - AdminController
+    // 📋 İSTER 6: Kullanıcı Tipleri - Sadece Admin rolü erişebilir
     [Authorize(Roles = "Admin")] // KİLİT NOKTA: Sadece Admin girebilir
     public class AdminController : Controller
     {
@@ -16,26 +18,30 @@ namespace WiseCart_Web.Controllers
             _context = context;
         }
 
+        // 📋 İSTER 1: Action - Index
+        // 📋 İSTER 5: CRUD - READ (Listeleme)
         // 1. LİSTELEME (READ) - SAYFALAMA EKLENDİ
         public async Task<IActionResult> Index(int page = 1)
         {
             int pageSize = 20; // Her sayfada 20 ürün göster
 
             // Sorguyu hazırla
+            // 📊 PERFORMANS: Eager Loading (Include) - Category ve Brand bilgilerini tek sorguda çek
             var productsQuery = _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .OrderByDescending(p => p.Id); // En yeniler en başta
 
-            // Toplam sayıyı View'a gönder (İstatistik kartı için)
+            // 📊 PERFORMANS: CountAsync() - Asenkron sayma işlemi
             ViewBag.TotalProducts = await productsQuery.CountAsync();
             
-            // Sayfalanmış Veriyi Çek
+            // 📊 PERFORMANS: Sayfalama (Pagination) - Skip() ve Take() ile sadece gerekli kayıtları çek
             var products = await productsQuery
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
 
+            // 📋 İSTER 7: ViewBag kullanımı - Sayfalama bilgileri View'a aktarılır
             // Sayfalama bilgilerini View'a gönder
             ViewBag.CurrentPage = page;
             ViewBag.TotalPages = (int)Math.Ceiling(ViewBag.TotalProducts / (double)pageSize);
@@ -43,6 +49,8 @@ namespace WiseCart_Web.Controllers
             return View(products);
         }
 
+        // 📋 İSTER 1: Action - Delete
+        // 📋 İSTER 5: CRUD - DELETE (Silme)
         // 2. SİLME (DELETE)
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
@@ -64,6 +72,9 @@ namespace WiseCart_Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // 📋 İSTER 1: Action - Create (GET)
+        // 📋 İSTER 5: CRUD - CREATE (Ekleme sayfası)
+        // 📋 İSTER 7: ViewData kullanımı - Kategori ve marka listeleri View'a aktarılır
         // 3. EKLEME SAYFASI (CREATE GET)
         public IActionResult Create()
         {
@@ -72,6 +83,9 @@ namespace WiseCart_Web.Controllers
             return View();
         }
 
+        // 📋 İSTER 1: Action - Create (POST)
+        // 📋 İSTER 5: CRUD - CREATE (Ekleme işlemi)
+        // 📋 İSTER 7: TempData kullanımı - Başarı mesajı View'a aktarılır
         // 4. EKLEME İŞLEMİ (CREATE POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -100,6 +114,7 @@ namespace WiseCart_Web.Controllers
                 _context.Add(history);
                 await _context.SaveChangesAsync();
 
+                // 📋 İSTER 7: TempData kullanımı - Başarı mesajı bir sonraki sayfaya aktarılır
                 // TempData ile başarı mesajı gönder (ViewData/TempData kullanımı için)
                 TempData["SuccessMessage"] = $"Ürün '{product.Name}' başarıyla eklendi!";
                 
@@ -112,6 +127,9 @@ namespace WiseCart_Web.Controllers
             return View(product);
         }
 
+        // 📋 İSTER 1: Action - Edit (GET)
+        // 📋 İSTER 5: CRUD - UPDATE (Güncelleme sayfası)
+        // 📋 İSTER 7: ViewData kullanımı - Kategori ve marka listeleri View'a aktarılır
         // 5. GÜNCELLEME SAYFASI (UPDATE GET)
         public async Task<IActionResult> Edit(int? id)
         {
@@ -136,6 +154,9 @@ namespace WiseCart_Web.Controllers
             return View(product);
         }
 
+        // 📋 İSTER 1: Action - Edit (POST)
+        // 📋 İSTER 5: CRUD - UPDATE (Güncelleme işlemi)
+        // 📋 İSTER 7: TempData kullanımı - Başarı mesajı View'a aktarılır
         // 6. GÜNCELLEME İŞLEMİ (UPDATE POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -180,6 +201,7 @@ namespace WiseCart_Web.Controllers
 
                     await _context.SaveChangesAsync();
 
+                    // 📋 İSTER 7: TempData kullanımı - Başarı mesajı View'a aktarılır
                     // TempData ile başarı mesajı gönder
                     TempData["SuccessMessage"] = $"Ürün '{product.Name}' başarıyla güncellendi!";
                 }

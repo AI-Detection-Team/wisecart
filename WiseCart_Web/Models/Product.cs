@@ -19,13 +19,18 @@ public partial class Product
 
     public string? ImageUrl { get; set; }
 
+    // 📊 NORMALİZASYON: Foreign Key - Kategori bilgisi ayrı tabloda (Categories)
     public int? CategoryId { get; set; }
 
+    // 📊 NORMALİZASYON: Foreign Key - Marka bilgisi ayrı tabloda (Brands)
     public int? BrandId { get; set; }
 
+    // 📊 FOREIGN KEY İLİŞKİSİ: Navigation Property - Product -> Brand (1-N ilişki)
     public virtual Brand? Brand { get; set; }
 
+    // 📊 FOREIGN KEY İLİŞKİSİ: Navigation Property - Product -> Category (1-N ilişki)
     public virtual Category? Category { get; set; }
 
+    // 📊 FOREIGN KEY İLİŞKİSİ: Navigation Property - Product -> PriceHistory (1-N ilişki)
     public virtual ICollection<PriceHistory> PriceHistories { get; set; } = new List<PriceHistory>();
 }

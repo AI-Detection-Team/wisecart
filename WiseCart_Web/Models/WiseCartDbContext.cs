@@ -65,6 +65,8 @@ public partial class WiseCartDbContext : DbContext
 
             entity.Property(e => e.Date).HasColumnType("datetime");
 
+            // 📊 FOREIGN KEY İLİŞKİSİ: PriceHistory -> Product (Veri Bütünlüğü)
+            // Bir fiyat geçmişi kaydı mutlaka bir ürüne ait olmalıdır
             entity.HasOne(d => d.Product).WithMany(p => p.PriceHistories)
                 .HasForeignKey(d => d.ProductId)
                 .HasConstraintName("FK__PriceHist__Produ__45F365D3");
@@ -87,10 +89,14 @@ public partial class WiseCartDbContext : DbContext
                 .HasMaxLength(1000)
                 .IsUnicode(false);
 
+            // 📊 FOREIGN KEY İLİŞKİSİ: Product -> Brand (Normalizasyon: Marka bilgisi ayrı tabloda)
+            // Bir ürün mutlaka bir markaya ait olmalıdır (Veri Bütünlüğü)
             entity.HasOne(d => d.Brand).WithMany(p => p.Products)
                 .HasForeignKey(d => d.BrandId)
                 .HasConstraintName("FK__Products__BrandI__4316F928");
 
+            // 📊 FOREIGN KEY İLİŞKİSİ: Product -> Category (Normalizasyon: Kategori bilgisi ayrı tabloda)
+            // Bir ürün mutlaka bir kategoriye ait olmalıdır (Veri Bütünlüğü)
             entity.HasOne(d => d.Category).WithMany(p => p.Products)
                 .HasForeignKey(d => d.CategoryId)
                 .HasConstraintName("FK__Products__Catego__4222D4EF");
@@ -124,16 +130,23 @@ public partial class WiseCartDbContext : DbContext
 
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
 
+            // 📊 FOREIGN KEY İLİŞKİSİ: Favorite -> User (Veri Bütünlüğü)
+            // Cascade Delete: Kullanıcı silinirse favorileri de silinir
             entity.HasOne(d => d.User).WithMany()
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK__Favorites__User");
 
+            // 📊 FOREIGN KEY İLİŞKİSİ: Favorite -> Product (Veri Bütünlüğü)
+            // Cascade Delete: Ürün silinirse favorilerden de silinir
             entity.HasOne(d => d.Product).WithMany()
                 .HasForeignKey(d => d.ProductId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK__Favorites__Product");
 
+            // 📊 INDEX: UNIQUE INDEX - Aynı kullanıcı aynı ürünü iki kez favorilere ekleyemez
+            //  (Veri Bütünlüğü + Performans)
+            // Composite index: UserId ve ProductId birlikte unique olmalı
             entity.HasIndex(e => new { e.UserId, e.ProductId }).IsUnique();
         });
 
@@ -152,6 +165,13 @@ public partial class WiseCartDbContext : DbContext
                 .HasMaxLength(50)
                 .IsUnicode(false);
 
+            // ProfileImagePath kolonunu ignore et (profil resmi kullanılmıyor)
+            // Entity Framework'ün veritabanındaki fazladan kolonları görmezden gelmesi için
+            // Model'de tanımlı olmayan kolonlar otomatik olarak ignore edilir
+            // Eğer veritabanında ProfileImagePath varsa, Entity Framework bunu görmezden gelir
+
+            // 📊 FOREIGN KEY İLİŞKİSİ: User -> Role (Normalizasyon: Rol bilgisi ayrı tabloda)
+            // Bir kullanıcı bir role sahip olabilir (Veri Bütünlüğü)
             entity.HasOne(d => d.Role).WithMany(p => p.Users)
                 .HasForeignKey(d => d.RoleId)
                 .HasConstraintName("FK__Users__RoleId__3F466844");

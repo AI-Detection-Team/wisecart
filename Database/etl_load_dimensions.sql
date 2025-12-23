@@ -147,3 +147,7 @@ PRINT '✅ TÜM DIMENSION TABLOLARI YÜKLENDİ!';
 PRINT '========================================';
 PRINT '';
 
+
+
+
+

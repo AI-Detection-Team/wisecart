@@ -34,7 +34,7 @@ def soap_service():
     
     # 2. Banka cevap vermezse Rastgele Üret (Yedek Plan)
     if dolar_kuru is None:
-        dolar_kuru = round(34.50 + random.random(), 2)
+        dolar_kuru = round(40.50 + random.random(), 2)
         kaynak = "Simülasyon (Random)"
         print(f"🎲 TCMB Cevap Vermedi, Rastgele Sayı Üretildi: {dolar_kuru}")
     

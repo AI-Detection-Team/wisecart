@@ -149,3 +149,7 @@ PRINT '  2. fn_GetCategoryAveragePrice - Kategori ortalama fiyatı';
 PRINT '  3. fn_CalculatePriceChangePercent - Fiyat değişim yüzdesi (BONUS)';
 PRINT '';
 
+
+
+
+

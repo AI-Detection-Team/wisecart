@@ -6,6 +6,7 @@ using WiseCart_Web.Models;
 
 namespace WiseCart_Web.Controllers
 {
+    // 📋 İSTER 1: Controller - FavoritesController (API Controller)
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
@@ -18,6 +19,7 @@ namespace WiseCart_Web.Controllers
             _context = context;
         }
 
+        // 📋 İSTER 1: Action - ToggleFavorite
         // POST: api/Favorites/Toggle
         [HttpPost("Toggle")]
         public async Task<IActionResult> ToggleFavorite([FromBody] int productId)
@@ -28,6 +30,7 @@ namespace WiseCart_Web.Controllers
                 return Unauthorized();
             }
 
+            // 📊 PERFORMANS: FirstOrDefaultAsync() - Sadece ilk eşleşen kaydı çeker (tüm listeyi değil)
             var existingFavorite = await _context.Favorites
                 .FirstOrDefaultAsync(f => f.UserId == userId && f.ProductId == productId);
 
@@ -53,6 +56,7 @@ namespace WiseCart_Web.Controllers
             }
         }
 
+        // 📋 İSTER 1: Action - CheckFavorite
         // GET: api/Favorites/Check/{productId}
         [HttpGet("Check/{productId}")]
         public async Task<IActionResult> CheckFavorite(int productId)
@@ -63,6 +67,8 @@ namespace WiseCart_Web.Controllers
                 return Ok(new { isFavorite = false });
             }
 
+            // 📊 PERFORMANS: AnyAsync() - Sadece varlık kontrolü yapar (tüm kaydı çekmez)
+            // Count() yerine Any() kullanmak daha performanslıdır
             var isFavorite = await _context.Favorites
                 .AnyAsync(f => f.UserId == userId && f.ProductId == productId);
 
@@ -70,5 +76,9 @@ namespace WiseCart_Web.Controllers
         }
     }
 }
+
+
+
+
 
 
