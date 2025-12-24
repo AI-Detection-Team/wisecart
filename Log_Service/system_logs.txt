@@ -42,3 +42,8 @@
 [20.12.2025 20:42:17] KULLANICI: pinar | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: Sony Ps4 Dualshock Joystick V2 Gamepad Yenilenmiş Yeni Nesil Kol (Fiyat: 749 TL)
 [23.12.2025 13:18:22] KULLANICI: Misafir | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: PS4 Uyumlu V2 Yeni Nesil Gold Dualshock (Fiyat: 709 TL)
 [23.12.2025 13:33:02] KULLANICI: admin | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: Hp Series 5 Pro 34 İnch Wqhd Usb-c Conferencing Monitor - 534pm (Fiyat: 29495.8 TL)
+[24.12.2025 11:37:34] KULLANICI: Misafir | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: Philips 243V7QJABF/00 23.8" 5 MS 60 Hz VGA+HDMI+DP Full HD IPS LED Monitör (Fiyat: 6111.36 TL)
+[24.12.2025 14:18:10] KULLANICI: admin | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: Raydın G270ıps165 27" 165hz 1ms Hdmı+dp Fullhd Freesync Ips Vesa Monitör (Fiyat: 6739 TL)
+[24.12.2025 14:32:43] KULLANICI: yagmur123 | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: Philips 243V7QJABF/00 23.8" 5 MS 60 Hz VGA+HDMI+DP Full HD IPS LED Monitör (Fiyat: 6111.36 TL)
+[24.12.2025 14:35:58] KULLANICI: yagmur123 | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: Soulader Kablosuz Bluetooth Kulaklık - Titreşimli Bildirim Özellikli Rahat Kulak İçi Tasarım, Şık Ve Hafif (Fiyat: 1896.69 TL)
+[24.12.2025 14:44:12] KULLANICI: yagmur123 | İŞLEM: Ürün Görüntüleme | DETAY: Ürün: Philips 243V7QJABF/00 23.8" 5 MS 60 Hz VGA+HDMI+DP Full HD IPS LED Monitör (Fiyat: 6111.36 TL)

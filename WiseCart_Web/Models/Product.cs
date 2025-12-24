@@ -25,6 +25,12 @@ public partial class Product
     // 📊 NORMALİZASYON: Foreign Key - Marka bilgisi ayrı tabloda (Brands)
     public int? BrandId { get; set; }
 
+    // 📊 SOFT DELETE: Ürün silindi mi? (Veritabanında kalır ama listede görünmez)
+    public bool IsDeleted { get; set; } = false;
+
+    // 📊 SOFT DELETE: Ürün ne zaman silindi?
+    public DateTime? DeletedAt { get; set; }
+
     // 📊 FOREIGN KEY İLİŞKİSİ: Navigation Property - Product -> Brand (1-N ilişki)
     public virtual Brand? Brand { get; set; }
 

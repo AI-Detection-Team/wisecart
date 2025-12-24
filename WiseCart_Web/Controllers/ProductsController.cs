@@ -29,7 +29,9 @@ namespace WiseCart_Web.Controllers
             // 📊 PERFORMANS: Eager Loading (Include) - Category ve Brand bilgilerini tek sorguda çek
             // N+1 sorgu problemini önler, ilişkili verileri önceden yükler
             // 📊 PERFORMANS: AsQueryable() - Sorguyu erteleyerek filtreleme yapabilmeyi sağlar
+            // 📊 SOFT DELETE: Sadece silinmemiş ürünleri göster
             var productsQuery = _context.Products
+                .Where(p => !p.IsDeleted) // Sadece aktif ürünler
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .AsQueryable();
@@ -82,7 +84,9 @@ namespace WiseCart_Web.Controllers
             if (id == null) return NotFound();
 
             // 📊 PERFORMANS: Eager Loading - Category ve Brand bilgilerini tek sorguda çek
+            // 📊 SOFT DELETE: Sadece silinmemiş ürünleri göster
             var product = await _context.Products
+                .Where(p => !p.IsDeleted) // Sadece aktif ürünler
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .FirstOrDefaultAsync(m => m.Id == id);
@@ -91,7 +95,9 @@ namespace WiseCart_Web.Controllers
 
             // 📊 PERFORMANS: Take(4) - Sadece 4 benzer ürün çek (tüm listeyi çekme)
             // 📊 PERFORMANS: Eager Loading - Category ve Brand bilgilerini tek sorguda çek
+            // 📊 SOFT DELETE: Sadece silinmemiş ürünleri göster
             var similarProducts = await _context.Products
+                .Where(p => !p.IsDeleted) // Sadece aktif ürünler
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .Where(p => p.CategoryId == product.CategoryId && p.Id != product.Id)

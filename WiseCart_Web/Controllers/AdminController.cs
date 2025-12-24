@@ -20,14 +20,16 @@ namespace WiseCart_Web.Controllers
 
         // 📋 İSTER 1: Action - Index
         // 📋 İSTER 5: CRUD - READ (Listeleme)
-        // 1. LİSTELEME (READ) - SAYFALAMA EKLENDİ
+        // 1. LİSTELEME (READ) - SAYFALAMA EKLENDİ - SADECE SİLİNMEYEN ÜRÜNLER
         public async Task<IActionResult> Index(int page = 1)
         {
             int pageSize = 20; // Her sayfada 20 ürün göster
 
-            // Sorguyu hazırla
+            // Sorguyu hazırla - Sadece silinmemiş ürünleri göster
             // 📊 PERFORMANS: Eager Loading (Include) - Category ve Brand bilgilerini tek sorguda çek
+            // 📊 SOFT DELETE: IsDeleted = false olan ürünleri göster
             var productsQuery = _context.Products
+                .Where(p => !p.IsDeleted) // Sadece silinmemiş ürünler
                 .Include(p => p.Category)
                 .Include(p => p.Brand)
                 .OrderByDescending(p => p.Id); // En yeniler en başta
@@ -41,6 +43,9 @@ namespace WiseCart_Web.Controllers
                 .Take(pageSize)
                 .ToListAsync();
 
+            // Silinen ürün sayısını da göster
+            ViewBag.DeletedProductsCount = await _context.Products.CountAsync(p => p.IsDeleted);
+
             // 📋 İSTER 7: ViewBag kullanımı - Sayfalama bilgileri View'a aktarılır
             // Sayfalama bilgilerini View'a gönder
             ViewBag.CurrentPage = page;
@@ -50,26 +55,151 @@ namespace WiseCart_Web.Controllers
         }
 
         // 📋 İSTER 1: Action - Delete
-        // 📋 İSTER 5: CRUD - DELETE (Silme)
-        // 2. SİLME (DELETE)
+        // 📋 İSTER 5: CRUD - DELETE (Soft Delete - Yumuşak Silme)
+        // 2. SİLME (SOFT DELETE) - Ürün veritabanında kalır ama listede görünmez
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product != null)
+            var product = await _context.Products
+                .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted); // Sadece silinmemiş ürünleri bul
+            
+            if (product == null)
             {
-                // Önce fiyat geçmişini silmeliyiz (Foreign Key hatası almamak için)
+                TempData["ErrorMessage"] = "Ürün bulunamadı veya zaten silinmiş!";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var productName = product.Name;
+
+            try
+            {
+                // SOFT DELETE: Ürünü tamamen silmek yerine işaretle
+                product.IsDeleted = true;
+                product.DeletedAt = DateTime.Now;
+                
+                // Favorilerden de kaldır (Kullanıcılar silinen ürünü favorilerinde görmesin)
+                var favorites = _context.Favorites.Where(f => f.ProductId == id);
+                _context.Favorites.RemoveRange(favorites);
+
+                await _context.SaveChangesAsync();
+
+                // 📋 İSTER 7: TempData kullanımı - Başarı mesajı View'a aktarılır
+                TempData["SuccessMessage"] = $"Ürün '{productName}' başarıyla silindi! (Veritabanında saklanıyor)";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Ürün silinirken bir hata oluştu: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // 📋 İSTER 1: Action - Restore
+        // 📋 İSTER 5: CRUD - RESTORE (Geri Yükleme)
+        // 3. GERİ YÜKLEME (RESTORE) - Silinen ürünü tekrar aktif et
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Restore(int id)
+        {
+            var product = await _context.Products
+                .FirstOrDefaultAsync(p => p.Id == id && p.IsDeleted); // Sadece silinmiş ürünleri bul
+            
+            if (product == null)
+            {
+                TempData["ErrorMessage"] = "Ürün bulunamadı veya zaten aktif!";
+                return RedirectToAction(nameof(Deleted));
+            }
+
+            var productName = product.Name;
+
+            try
+            {
+                // Ürünü tekrar aktif et
+                product.IsDeleted = false;
+                product.DeletedAt = null;
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = $"Ürün '{productName}' başarıyla geri yüklendi!";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Ürün geri yüklenirken bir hata oluştu: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(Deleted));
+        }
+
+        // 📋 İSTER 1: Action - Deleted
+        // 📋 İSTER 5: CRUD - READ (Silinen Ürünleri Listeleme)
+        // 4. SİLİNEN ÜRÜNLER LİSTESİ
+        public async Task<IActionResult> Deleted(int page = 1)
+        {
+            int pageSize = 20; // Her sayfada 20 ürün göster
+
+            // Sadece silinmiş ürünleri göster
+            var productsQuery = _context.Products
+                .Where(p => p.IsDeleted) // Sadece silinmiş ürünler
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .OrderByDescending(p => p.DeletedAt); // En son silinenler en başta
+
+            ViewBag.TotalDeletedProducts = await productsQuery.CountAsync();
+            
+            var products = await productsQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = (int)Math.Ceiling(ViewBag.TotalDeletedProducts / (double)pageSize);
+            ViewBag.ActiveProductsCount = await _context.Products.CountAsync(p => !p.IsDeleted);
+
+            return View(products);
+        }
+
+        // 📋 İSTER 1: Action - PermanentDelete
+        // 📋 İSTER 5: CRUD - PERMANENT DELETE (Kalıcı Silme)
+        // 5. KALICI SİLME - Ürünü veritabanından tamamen sil
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PermanentDelete(int id)
+        {
+            var product = await _context.Products
+                .Include(p => p.PriceHistories)
+                .FirstOrDefaultAsync(p => p.Id == id && p.IsDeleted); // Sadece silinmiş ürünleri kalıcı olarak silebiliriz
+            
+            if (product == null)
+            {
+                TempData["ErrorMessage"] = "Ürün bulunamadı! Sadece silinmiş ürünler kalıcı olarak silinebilir.";
+                return RedirectToAction(nameof(Deleted));
+            }
+
+            var productName = product.Name;
+
+            try
+            {
+                // Önce fiyat geçmişini sil
                 var history = _context.PriceHistories.Where(h => h.ProductId == id);
                 _context.PriceHistories.RemoveRange(history);
                 
-                // Varsa yorumları da sil (Eğer yorum tablosu varsa)
-                // var comments = _context.Comments.Where(c => c.ProductId == id);
-                // _context.Comments.RemoveRange(comments);
+                // Favorilerden de sil
+                var favorites = _context.Favorites.Where(f => f.ProductId == id);
+                _context.Favorites.RemoveRange(favorites);
 
+                // Ürünü tamamen sil
                 _context.Products.Remove(product);
                 await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = $"Ürün '{productName}' veritabanından kalıcı olarak silindi!";
             }
-            return RedirectToAction(nameof(Index));
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Ürün kalıcı olarak silinirken bir hata oluştu: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(Deleted));
         }
 
         // 📋 İSTER 1: Action - Create (GET)

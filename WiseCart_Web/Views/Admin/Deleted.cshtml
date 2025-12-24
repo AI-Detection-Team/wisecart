@@ -1,0 +1,189 @@
+@* 📋 İSTER 2: Esnek View - Responsive tasarım, sayfalama *@
+@* 📋 İSTER 4: Layout - _Layout.cshtml kullanılıyor *@
+@* 📋 İSTER 5: CRUD - READ (Silinen Ürünleri Listeleme) View'ı *@
+@* 📋 İSTER 6: Kullanıcı Tipleri - Sadece Admin erişebilir *@
+@* 📋 İSTER 7: TempData kullanımı - Başarı mesajları gösteriliyor *@
+@model IEnumerable<WiseCart_Web.Models.Product>
+@{
+    ViewData["Title"] = "Silinen Ürünler";
+    Layout = "_Layout"; 
+    
+    // Controller'dan gelen sayfa bilgileri
+    int currentPage = ViewBag.CurrentPage ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalDeletedProducts = ViewBag.TotalDeletedProducts ?? 0;
+    int activeProductsCount = ViewBag.ActiveProductsCount ?? 0;
+}
+
+<div class="container-fluid py-4">
+    @* 📋 İSTER 7: TempData kullanımı - Controller'dan gelen başarı mesajı gösteriliyor *@
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fa-solid fa-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fa-solid fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark"><i class="fa-solid fa-trash-can"></i> Silinen Ürünler</h2>
+            <p class="text-muted mb-0">
+                Toplam <strong>@totalDeletedProducts</strong> silinen ürün var.
+                <a asp-action="Index" class="text-decoration-none ms-2">← Aktif ürünlere dön</a>
+            </p>
+        </div>
+        <a asp-action="Index" class="btn btn-primary btn-lg rounded-pill shadow-sm">
+            <i class="fa-solid fa-arrow-left"></i> Aktif Ürünler (@activeProductsCount)
+        </a>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card bg-danger text-white border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">Silinen Ürün</h6>
+                        <h3 class="fw-bold mb-0">@totalDeletedProducts</h3>
+                    </div>
+                    <i class="fa-solid fa-trash-can fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">Aktif Ürün</h6>
+                        <h3 class="fw-bold mb-0">@activeProductsCount</h3>
+                    </div>
+                    <i class="fa-solid fa-box-open fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white border-0 shadow-sm p-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">Sayfa</h6>
+                        <h3 class="fw-bold mb-0">@currentPage / @totalPages</h3>
+                    </div>
+                    <i class="fa-solid fa-file-lines fa-2x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (totalDeletedProducts == 0)
+    {
+        <div class="card shadow border-0">
+            <div class="card-body text-center py-5">
+                <i class="fa-solid fa-check-circle fa-4x text-success mb-3"></i>
+                <h4 class="text-muted">Henüz silinen ürün yok</h4>
+                <p class="text-muted">Tüm ürünler aktif durumda.</p>
+                <a asp-action="Index" class="btn btn-primary">Aktif Ürünlere Dön</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow border-0">
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">ID</th>
+                            <th>Görsel</th>
+                            <th>Ürün Adı</th>
+                            <th>Marka</th>
+                            <th>Fiyat</th>
+                            <th>Kategori</th>
+                            <th>Silinme Tarihi</th>
+                            <th class="text-end pe-4">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model) {
+                            <tr class="@(item.IsDeleted ? "opacity-75" : "")">
+                                <td class="ps-4 text-muted">#@item.Id</td>
+                                <td>
+                                    <img src="@(string.IsNullOrEmpty(item.ImageUrl) ? "https://via.placeholder.com/50" : item.ImageUrl)" 
+                                         class="rounded border bg-white" 
+                                         style="width: 40px; height: 40px; object-fit: contain;"
+                                         onerror="this.src='https://via.placeholder.com/50?text=Yok'">
+                                </td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 250px;" title="@item.Name">
+                                        <strong>@item.Name</strong>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-info text-dark">@item.Brand?.Name</span></td>
+                                <td class="fw-bold text-success">@item.CurrentPrice?.ToString("N0") TL</td>
+                                <td><span class="badge bg-secondary bg-opacity-10 text-secondary border">@item.Category?.Name</span></td>
+                                <td>
+                                    @if (item.DeletedAt.HasValue)
+                                    {
+                                        <small class="text-muted">@item.DeletedAt.Value.ToString("dd.MM.yyyy HH:mm")</small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted">-</small>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group" role="group">
+                                        <form asp-action="Restore" asp-route-id="@item.Id" method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-success" title="Geri Yükle"
+                                                    onclick="return confirm('⚠️ \'@item.Name\' ürününü geri yüklemek istediğinize emin misiniz?');">
+                                                <i class="fa-solid fa-rotate-left"></i> Geri Yükle
+                                            </button>
+                                        </form>
+                                        <form asp-action="PermanentDelete" asp-route-id="@item.Id" method="post" style="display:inline;" class="ms-1">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-danger" title="Kalıcı Olarak Sil"
+                                                    onclick="return confirm('❗❗❗ DİKKAT: \'@item.Name\' ürününü veritabanından KALICI OLARAK silmek istediğinize emin misiniz?\n\nBu işlem GERİ ALINAMAZ!');">
+                                                <i class="fa-solid fa-trash"></i> Kalıcı Sil
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="card-footer bg-white py-3">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                            <a class="page-link" asp-action="Deleted" asp-route-page="@(currentPage - 1)">
+                                <i class="fa-solid fa-chevron-left"></i> Önceki
+                            </a>
+                        </li>
+
+                        <li class="page-item disabled">
+                            <span class="page-link text-dark fw-bold">Sayfa @currentPage / @totalPages</span>
+                        </li>
+
+                        <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                            <a class="page-link" asp-action="Deleted" asp-route-page="@(currentPage + 1)">
+                                Sonraki <i class="fa-solid fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    }
+</div>
+

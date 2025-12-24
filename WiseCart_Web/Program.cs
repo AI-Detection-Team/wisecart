@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using WiseCart_Web.Models; // Kendi proje isminle aynı olmalı
+using WiseCart_Web.Services; // OLAP Analytics Service için
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 // appsettings.json dosyasındaki "DefaultConnection" ismini okur.
 builder.Services.AddDbContext<WiseCartDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// OLAP Analytics Service ekle
+builder.Services.AddScoped<OlapAnalyticsService>();
 
 // MVC Servislerini Ekle
 builder.Services.AddControllersWithViews();

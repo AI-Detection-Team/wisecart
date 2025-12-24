@@ -88,6 +88,14 @@ public partial class WiseCartDbContext : DbContext
             entity.Property(e => e.Url)
                 .HasMaxLength(1000)
                 .IsUnicode(false);
+            
+            // 📊 SOFT DELETE: IsDeleted kolonu (Varsayılan: false)
+            entity.Property(e => e.IsDeleted)
+                .HasDefaultValue(false);
+            
+            // 📊 SOFT DELETE: DeletedAt kolonu (Nullable - sadece silinen ürünlerde dolu)
+            entity.Property(e => e.DeletedAt)
+                .HasColumnType("datetime");
 
             // 📊 FOREIGN KEY İLİŞKİSİ: Product -> Brand (Normalizasyon: Marka bilgisi ayrı tabloda)
             // Bir ürün mutlaka bir markaya ait olmalıdır (Veri Bütünlüğü)

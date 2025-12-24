@@ -14,7 +14,7 @@ namespace WiseCart_Web.ViewComponents
             try
             {
                 // Python gRPC sunucusuna (50051) bağlan
-                // http://localhost:50051 adresi Pınar'ın sunucusu
+                // http://localhost:50051 adresi 
                 using var channel = GrpcChannel.ForAddress("http://localhost:50051");
                 var client = new StatusCheck.StatusCheckClient(channel);
                 var reply = await client.GetSystemStatusAsync(new Empty());
